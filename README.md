@@ -66,6 +66,15 @@ The template includes meta tags for better search engine visibility and social m
 
 Create a 1200x630px social preview image at `static/images/social_preview.png`.
 
+## Deployment
+
+This template includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys your site to GitHub Pages when you push to the main branch.
+
+### To enable GitHub Pages deployment:
+1. Go to your repository Settings → Pages
+2. Set Source to "GitHub Actions"
+3. Push changes to the main branch to trigger automatic deployment
+
 ## Tips
 
 - Compress images with [TinyPNG](https://tinypng.com)

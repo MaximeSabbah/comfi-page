@@ -1,7 +1,7 @@
-/* ================================================
-   Task Gallery — ALL VISIBLE, AUTO-PLAY, LOOP
+/* ==========================================================
+   Task Gallery — ALL or PAGINATED, auto-play, loop, posters
    Uses one demo video + one poster for every task
-   ================================================ */
+   ========================================================== */
 "use strict";
 
 /* ---- Config (your files) ---- */
@@ -39,7 +39,23 @@ const TASKS = TASK_NAMES.map(name => ({
   tags: [baseTag(name)]
 }));
 
-/* ---- Dom helpers ---- */
+/* ---- State ---- */
+const MODE_ALL   = "all";
+const MODE_PAGED = "paged";
+let mode = MODE_ALL;                // default: show all
+let currentPage = 1;
+let itemsPerPage = 10;              // 10-by-10 as requested
+let filtered = [...TASKS];
+let videoObserver = null;
+const playingSet = new Set();
+const MAX_PLAYING = 6;              // cap concurrent playbacks
+const IO_ROOT_MARGIN = "200px 0px";
+
+/* ---- Helpers ---- */
+function paginate(arr, page, perPage) {
+  const start = (page - 1) * perPage;
+  return arr.slice(start, start + perPage);
+}
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -47,7 +63,7 @@ function el(tag, cls, text) {
   return e;
 }
 
-/* ---- Make one card (auto-play video) ---- */
+/* ---- Card factory ---- */
 function makeTaskCard(task) {
   const col   = el("div", "column is-full-mobile is-half-tablet is-one-third-desktop is-one-fifth-widescreen");
   const card  = el("div", "card task-card");
@@ -57,37 +73,31 @@ function makeTaskCard(task) {
   const wrap   = el("div", "video-wrap");
 
   const video = document.createElement("video");
-  // Attributes for frictionless autoplay on all browsers
   video.setAttribute("playsinline", "");
   video.setAttribute("muted", "");
   video.setAttribute("loop", "");
-  video.setAttribute("autoplay", "");   // also set the property below
-  video.setAttribute("preload", "auto");
+  video.setAttribute("preload", "none");
   video.setAttribute("aria-label", `${task.title} preview`);
   if (task.poster) video.setAttribute("poster", task.poster);
 
-  // Properties (Safari/iOS are picky)
+  // Properties for iOS/Safari auto-play
   video.muted = true;
-  video.loop = true;
   video.playsInline = true;
-  video.autoplay = true;
+  video.loop = true;
 
-  // Source now (no lazy-load since we want instant autoplay)
-  video.src = task.src;
-
-  // Start playing as soon as the browser can
+  // Lazy-load source; start playing once we can
+  video.dataset.src = task.src;
   video.addEventListener("canplay", () => {
-    video.play().catch(() => {/* if blocked, user hover/click will start it */});
+    safePlay(video);
   }, { once: true });
 
-  // Hover/tap keep working
-  video.addEventListener("mouseenter", () => { if (video.readyState > 2) video.play().catch(() => {}); });
-  video.addEventListener("mouseleave", () => { video.pause(); video.currentTime = 0; });
+  // Hover/tap also work
+  video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
+  video.addEventListener("mouseleave", () => { safeStop(video); });
   video.addEventListener("click", () => {
-    if (video.paused) video.play().catch(() => {}); else { video.pause(); video.currentTime = 0; }
+    if (video.paused) safePlay(video); else safeStop(video);
   });
 
-  // Overlay label
   const vlabel = el("span", "video-label", task.title);
 
   wrap.appendChild(video);
@@ -95,11 +105,10 @@ function makeTaskCard(task) {
   figure.appendChild(wrap);
   card.appendChild(figure);
 
-  // Text under the video
+  // Text
   const content = el("div", "card-content");
   const media   = el("div", "media");
   const mcont   = el("div", "media-content");
-
   mcont.appendChild(el("p", "title is-6", task.title));
 
   const tagsBox = el("div");
@@ -114,31 +123,107 @@ function makeTaskCard(task) {
   return col;
 }
 
-/* ---- Render everything (no pagination) ---- */
-function renderAll() {
+/* ---- Renderers ---- */
+function itemsToRender() {
+  return mode === MODE_ALL ? filtered : paginate(filtered, currentPage, itemsPerPage);
+}
+
+function render() {
   const grid = document.getElementById("task-grid");
   if (!grid) return;
   grid.innerHTML = "";
-  TASKS.forEach(task => grid.appendChild(makeTaskCard(task)));
+
+  // stop any playing videos before re-render
+  playingSet.forEach(v => { try { v.pause(); } catch {} });
+  playingSet.clear();
+
+  itemsToRender().forEach(task => grid.appendChild(makeTaskCard(task)));
+
+  renderControls();
+  setupIntersectionObservers();
 }
 
-/* ---- Optional: filter box support (if present) ---- */
-function hookSearch() {
-  const search = document.getElementById("task-search");
-  if (!search) return;
-  search.addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    const cards = Array.from(document.querySelectorAll("#task-grid .card"));
-    cards.forEach(card => {
-      const title = card.querySelector(".title")?.textContent.toLowerCase() ?? "";
-      const tags  = Array.from(card.querySelectorAll(".tag")).map(t => t.textContent.toLowerCase()).join(" ");
-      const show  = title.includes(q) || tags.includes(q);
-      card.parentElement.style.display = show ? "" : "none"; // hide column
-    });
+function renderControls() {
+  // Pagination visibility
+  const pag = document.getElementById("task-pagination");
+  if (pag) pag.style.display = (mode === MODE_PAGED) ? "" : "none";
+
+  // Per-page enabled/disabled
+  const pps = document.getElementById("per-page-select");
+  if (pps) pps.disabled = (mode === MODE_ALL);
+
+  if (mode === MODE_PAGED) {
+    const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+    const prevBtn = document.getElementById("prev-page");
+    const nextBtn = document.getElementById("next-page");
+    const list = document.getElementById("pagination-list");
+    if (!prevBtn || !nextBtn || !list) return;
+
+    list.innerHTML = "";
+    prevBtn.disabled = (currentPage === 1);
+    nextBtn.disabled = (currentPage === totalPages);
+
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; render(); } };
+
+    const start = Math.max(1, currentPage - 3);
+    const end = Math.min(totalPages, start + 6);
+    for (let p = start; p <= end; p++) {
+      const li = document.createElement("li");
+      const a = el("a", "pagination-link" + (p === currentPage ? " is-current" : ""), String(p));
+      a.setAttribute("aria-label", `Goto page ${p}`);
+      a.onclick = () => { currentPage = p; render(); };
+      li.appendChild(a);
+      list.appendChild(li);
+    }
+  }
+}
+
+/* ---- Autoplay & lazy-load ---- */
+function safePlay(video) {
+  if (playingSet.has(video)) return;
+  if (playingSet.size >= MAX_PLAYING) {
+    const first = playingSet.values().next().value;
+    if (first) safeStop(first);
+  }
+  video.play().then(() => {
+    playingSet.add(video);
+  }).catch(() => {
+    // If autoplay is blocked, user interaction (hover/click) will start it.
   });
 }
+function safeStop(video) {
+  try {
+    video.pause();
+    video.currentTime = 0;
+  } catch {}
+  playingSet.delete(video);
+}
 
-/* ---- Pause when tab hidden; resume when visible ---- */
+function setupIntersectionObservers() {
+  if (videoObserver) videoObserver.disconnect();
+
+  videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const video = entry.target;
+      if (entry.isIntersecting) {
+        if (!video.dataset.loaded) {
+          video.src = video.dataset.src;
+          video.dataset.loaded = "1";
+          video.load(); // triggers canplay -> safePlay
+        } else {
+          safePlay(video);
+        }
+      } else {
+        safeStop(video);
+      }
+    });
+  }, { root: null, rootMargin: IO_ROOT_MARGIN, threshold: 0.01 });
+
+  document.querySelectorAll("#task-grid video").forEach(v => videoObserver.observe(v));
+}
+
+/* ---- Visibility handling ---- */
 function hookVisibility() {
   document.addEventListener("visibilitychange", () => {
     const vids = document.querySelectorAll("#task-grid video");
@@ -150,9 +235,44 @@ function hookVisibility() {
   });
 }
 
-/* ---- Boot ---- */
+/* ---- Wire up controls & boot ---- */
 document.addEventListener("DOMContentLoaded", () => {
-  renderAll();
-  hookSearch();
+  // View mode
+  const viewSel = document.getElementById("view-mode");
+  if (viewSel) {
+    viewSel.value = mode; // default "all"
+    viewSel.addEventListener("change", (e) => {
+      mode = (e.target.value === MODE_PAGED) ? MODE_PAGED : MODE_ALL;
+      currentPage = 1;
+      render();
+    });
+  }
+
+  // Per-page selection (used only in paged mode)
+  const pps = document.getElementById("per-page-select");
+  if (pps) {
+    pps.value = String(itemsPerPage);
+    pps.addEventListener("change", (e) => {
+      itemsPerPage = parseInt(e.target.value, 10) || 10;
+      currentPage = 1;
+      render();
+    });
+  }
+
+  // Search
+  const search = document.getElementById("task-search");
+  if (search) {
+    search.addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      filtered = TASKS.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        (t.tags || []).some(tag => tag.toLowerCase().includes(q))
+      );
+      currentPage = 1;
+      render();
+    });
+  }
+
   hookVisibility();
+  render();
 });

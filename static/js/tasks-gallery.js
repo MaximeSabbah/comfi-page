@@ -7,7 +7,7 @@
 
 /* ---- Your files ---- */
 const DEMO_SRC = "static/videos/demo.mp4";        // same clip for all tasks
-const GENERIC_POSTER = "static/posters/demo.jpg"; // same poster for all tasks
+const GENERIC_POSTER = "static/posters/demo.jpg"; // same poster for all tasks generated with :  ffmpeg -i static/videos/demo.mp4 -frames:v 1 -q:v 2 static/posters/demo.jpg
 
 /* ---- Task list ---- */
 const TASK_NAMES = [

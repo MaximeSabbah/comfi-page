@@ -427,7 +427,6 @@
 </section>
 <!-- End paper abstract -->
 
-<!-- Task Gallery -->
 <section class="section" id="task-gallery">
   <div class="container is-max-widescreen">
     <h2 class="title is-3 has-text-centered">Dataset Tasks</h2>
@@ -436,11 +435,21 @@
     <!-- Controls -->
     <div class="level mb-4">
       <div class="level-left">
+        <!-- View mode: All vs Paginated -->
+        <div class="level-item">
+          <div class="select is-small">
+            <select id="view-mode" aria-label="View mode">
+              <option value="all" selected>All tasks</option>
+              <option value="paged">Paginated</option>
+            </select>
+          </div>
+        </div>
+        <!-- Items per page (used in Paginated mode) -->
         <div class="level-item">
           <div class="select is-small">
             <select id="per-page-select" aria-label="Items per page">
-              <option value="10">10 per page</option>
-              <option value="25" selected>All tasks</option>
+              <option value="10" selected>10 per page</option>
+              <option value="25">All tasks</option>
             </select>
           </div>
         </div>
@@ -455,14 +464,15 @@
     <!-- Grid -->
     <div id="task-grid" class="columns is-multiline is-mobile"></div>
 
-    <!-- Pagination -->
-    <nav class="pagination is-centered mt-5" role="navigation" aria-label="pagination">
+    <!-- Pagination (hidden in All mode) -->
+    <nav id="task-pagination" class="pagination is-centered mt-5" role="navigation" aria-label="pagination">
       <button class="pagination-previous button is-light" id="prev-page">Previous</button>
       <button class="pagination-next button is-light" id="next-page">Next</button>
       <ul class="pagination-list" id="pagination-list"></ul>
     </nav>
   </div>
 </section>
+
 
 
 

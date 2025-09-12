@@ -1,10 +1,11 @@
 /* ==========================================================
-   Task Gallery — ALL or PAGINATED, auto-play, loop, posters
-   Uses one demo video + one poster for every task
+   Task Gallery — Search + (All | 10-per-page)
+   Auto-play on view (muted, loop), pause off-screen.
+   Uses one demo video + one poster for EVERY task.
    ========================================================== */
 "use strict";
 
-/* ---- Config (your files) ---- */
+/* ---- Your files ---- */
 const DEMO_SRC = "static/videos/demo.mp4";        // same clip for all tasks
 const GENERIC_POSTER = "static/posters/demo.jpg"; // same poster for all tasks
 
@@ -42,13 +43,14 @@ const TASKS = TASK_NAMES.map(name => ({
 /* ---- State ---- */
 const MODE_ALL   = "all";
 const MODE_PAGED = "paged";
-let mode = MODE_ALL;                // default: show all
+let mode = MODE_ALL;          // default: All tasks
+let itemsPerPage = 10;        // fixed 10 per page
 let currentPage = 1;
-let itemsPerPage = 10;              // 10-by-10 as requested
 let filtered = [...TASKS];
+
 let videoObserver = null;
 const playingSet = new Set();
-const MAX_PLAYING = 6;              // cap concurrent playbacks
+const MAX_PLAYING = 6;        // cap concurrent playbacks
 const IO_ROOT_MARGIN = "200px 0px";
 
 /* ---- Helpers ---- */
@@ -76,22 +78,16 @@ function makeTaskCard(task) {
   video.setAttribute("playsinline", "");
   video.setAttribute("muted", "");
   video.setAttribute("loop", "");
-  video.setAttribute("preload", "none");
+  video.setAttribute("preload", "none");                 // attach src on view
   video.setAttribute("aria-label", `${task.title} preview`);
   if (task.poster) video.setAttribute("poster", task.poster);
+  video.muted = true; video.playsInline = true; video.loop = true;
 
-  // Properties for iOS/Safari auto-play
-  video.muted = true;
-  video.playsInline = true;
-  video.loop = true;
-
-  // Lazy-load source; start playing once we can
+  // Lazy src; start when we can
   video.dataset.src = task.src;
-  video.addEventListener("canplay", () => {
-    safePlay(video);
-  }, { once: true });
+  video.addEventListener("canplay", () => { safePlay(video); }, { once: true });
 
-  // Hover/tap also work
+  // Optional hover/tap
   video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
   video.addEventListener("mouseleave", () => { safeStop(video); });
   video.addEventListener("click", () => {
@@ -105,16 +101,14 @@ function makeTaskCard(task) {
   figure.appendChild(wrap);
   card.appendChild(figure);
 
-  // Text
+  // Minimal text
   const content = el("div", "card-content");
   const media   = el("div", "media");
   const mcont   = el("div", "media-content");
   mcont.appendChild(el("p", "title is-6", task.title));
-
   const tagsBox = el("div");
   (task.tags || []).forEach(t => tagsBox.appendChild(el("span", "tag is-light task-badge", t)));
   mcont.appendChild(tagsBox);
-
   media.appendChild(mcont);
   content.appendChild(media);
   card.appendChild(content);
@@ -139,68 +133,49 @@ function render() {
 
   itemsToRender().forEach(task => grid.appendChild(makeTaskCard(task)));
 
-  renderControls();
-  setupIntersectionObservers();
+  renderPagination();
+  setupVideoObserver();
 }
 
-function renderControls() {
-  // Pagination visibility
+function renderPagination() {
   const pag = document.getElementById("task-pagination");
-  if (pag) pag.style.display = (mode === MODE_PAGED) ? "" : "none";
+  if (!pag) return;
 
-  // Per-page enabled/disabled
-  const pps = document.getElementById("per-page-select");
-  if (pps) pps.disabled = (mode === MODE_ALL);
+  if (mode === MODE_ALL) {
+    pag.style.display = "none";
+    return;
+  }
 
-  if (mode === MODE_PAGED) {
-    const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-    const prevBtn = document.getElementById("prev-page");
-    const nextBtn = document.getElementById("next-page");
-    const list = document.getElementById("pagination-list");
-    if (!prevBtn || !nextBtn || !list) return;
+  pag.style.display = "";
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  currentPage = Math.min(currentPage, totalPages);
 
-    list.innerHTML = "";
-    prevBtn.disabled = (currentPage === 1);
-    nextBtn.disabled = (currentPage === totalPages);
+  const prevBtn = document.getElementById("prev-page");
+  const nextBtn = document.getElementById("next-page");
+  const list = document.getElementById("pagination-list");
+  list.innerHTML = "";
 
-    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
-    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; render(); } };
+  prevBtn.disabled = (currentPage === 1);
+  nextBtn.disabled = (currentPage === totalPages);
 
-    const start = Math.max(1, currentPage - 3);
-    const end = Math.min(totalPages, start + 6);
-    for (let p = start; p <= end; p++) {
-      const li = document.createElement("li");
-      const a = el("a", "pagination-link" + (p === currentPage ? " is-current" : ""), String(p));
-      a.setAttribute("aria-label", `Goto page ${p}`);
-      a.onclick = () => { currentPage = p; render(); };
-      li.appendChild(a);
-      list.appendChild(li);
-    }
+  prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+  nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; render(); } };
+
+  // Show up to 7 page buttons
+  const start = Math.max(1, currentPage - 3);
+  const end = Math.min(totalPages, start + 6);
+  for (let p = start; p <= end; p++) {
+    const li = document.createElement("li");
+    const a = el("a", "pagination-link" + (p === currentPage ? " is-current" : ""), String(p));
+    a.setAttribute("aria-label", `Goto page ${p}`);
+    a.onclick = () => { currentPage = p; render(); };
+    li.appendChild(a);
+    list.appendChild(li);
   }
 }
 
-/* ---- Autoplay & lazy-load ---- */
-function safePlay(video) {
-  if (playingSet.has(video)) return;
-  if (playingSet.size >= MAX_PLAYING) {
-    const first = playingSet.values().next().value;
-    if (first) safeStop(first);
-  }
-  video.play().then(() => {
-    playingSet.add(video);
-  }).catch(() => {
-    // If autoplay is blocked, user interaction (hover/click) will start it.
-  });
-}
-function safeStop(video) {
-  try {
-    video.pause();
-    video.currentTime = 0;
-  } catch {}
-  playingSet.delete(video);
-}
-
-function setupIntersectionObservers() {
+/* ---- Autoplay + lazy-load for videos ---- */
+function setupVideoObserver() {
   if (videoObserver) videoObserver.disconnect();
 
   videoObserver = new IntersectionObserver((entries) => {
@@ -223,37 +198,50 @@ function setupIntersectionObservers() {
   document.querySelectorAll("#task-grid video").forEach(v => videoObserver.observe(v));
 }
 
-/* ---- Visibility handling ---- */
+function safePlay(video) {
+  if (playingSet.has(video)) return;
+  if (playingSet.size >= MAX_PLAYING) {
+    const first = playingSet.values().next().value;
+    if (first) safeStop(first);
+  }
+  video.play().then(() => { playingSet.add(video); }).catch(() => {});
+}
+function safeStop(video) {
+  try { video.pause(); video.currentTime = 0; } catch {}
+  playingSet.delete(video);
+}
+
+/* ---- Wire up search + mode toggle + visibility ---- */
+function applySearch(q) {
+  const query = q.trim().toLowerCase();
+  filtered = TASKS.filter(t =>
+    t.title.toLowerCase().includes(query) ||
+    (t.tags || []).some(tag => tag.toLowerCase().includes(query))
+  );
+  currentPage = 1;
+  render();
+}
+
 function hookVisibility() {
   document.addEventListener("visibilitychange", () => {
     const vids = document.querySelectorAll("#task-grid video");
     if (document.hidden) {
       vids.forEach(v => { try { v.pause(); } catch {} });
+      playingSet.clear();
     } else {
       vids.forEach(v => { if (v.muted) v.play().catch(() => {}); });
     }
   });
 }
 
-/* ---- Wire up controls & boot ---- */
+/* ---- Boot ---- */
 document.addEventListener("DOMContentLoaded", () => {
-  // View mode
+  // View mode selector (All | Paginated 10-by-10)
   const viewSel = document.getElementById("view-mode");
   if (viewSel) {
-    viewSel.value = mode; // default "all"
+    viewSel.value = MODE_ALL;
     viewSel.addEventListener("change", (e) => {
-      mode = (e.target.value === MODE_PAGED) ? MODE_PAGED : MODE_ALL;
-      currentPage = 1;
-      render();
-    });
-  }
-
-  // Per-page selection (used only in paged mode)
-  const pps = document.getElementById("per-page-select");
-  if (pps) {
-    pps.value = String(itemsPerPage);
-    pps.addEventListener("change", (e) => {
-      itemsPerPage = parseInt(e.target.value, 10) || 10;
+      mode = (e.target.value === "paged") ? MODE_PAGED : MODE_ALL;
       currentPage = 1;
       render();
     });
@@ -262,15 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Search
   const search = document.getElementById("task-search");
   if (search) {
-    search.addEventListener("input", (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      filtered = TASKS.filter(t =>
-        t.title.toLowerCase().includes(q) ||
-        (t.tags || []).some(tag => tag.toLowerCase().includes(q))
-      );
-      currentPage = 1;
-      render();
-    });
+    search.addEventListener("input", (e) => applySearch(e.target.value));
   }
 
   hookVisibility();

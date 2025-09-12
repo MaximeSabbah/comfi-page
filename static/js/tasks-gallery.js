@@ -1,4 +1,22 @@
-// ===== 1) Task names (your list) =====
+/* ================================================
+   Task Gallery — single demo clip + single poster
+   File: static/js/tasks-gallery.js
+   ================================================ */
+"use strict";
+
+/* ---------- 0) CONFIG ---------- */
+const DEMO_SRC = "static/videos/demo.mp4";        // same video for all tasks
+const GENERIC_POSTER = "static/posters/demo.jpg"; // same poster for all tasks
+
+// Autopreview when visible (muted), and pause/reset when off-screen
+const AUTOPREVIEW_ENABLED = true;
+const MAX_PLAYING = 4;              // cap concurrent playbacks
+const IO_ROOT_MARGIN = "200px 0px"; // pre-load slightly before visible
+
+// Default page size (25 = 5×5 on widescreen)
+const DEFAULT_ITEMS_PER_PAGE = 25;
+
+/* ---------- 1) Your tasks ---------- */
 const TASK_NAMES = [
   "bolting","bolting_sat","crouch","crouch_object","hitting","hitting_sat","jump","lifting",
   "lifting_fast","lower","overhead","overhead_front","robot_sanding","robot_welding",
@@ -6,7 +24,7 @@ const TASK_NAMES = [
   "welding","welding_sat"
 ];
 
-// ===== 2) Label helpers =====
+/* ---------- 2) Label helpers ---------- */
 const LABEL_OVERRIDES = {
   sit_to_stand: "Sit-to-Stand",
   walk_front: "Walk (front)",
@@ -26,94 +44,89 @@ function baseTag(name) {
   return name.split("_")[0];
 }
 
-// ===== 3) Build task objects =====
-// For testing, point all to the same short clip.
-// Later: set src: `static/videos/${name}.mp4` once you add per-task files.
-const DEMO_SRC = "static/videos/demo.mp4";
+/* ---------- 3) Build task objects (all use same src/poster) ---------- */
 const TASKS = TASK_NAMES.map(name => ({
   id: name,
   title: humanize(name),
-  desc: "",
+  desc: "", // optional per-task text
   src: DEMO_SRC,
-  poster: "",           // or `static/posters/${name}.jpg`
+  poster: GENERIC_POSTER,
   tags: [baseTag(name)]
 }));
 
-// ===== 4) State & config =====
-const DEFAULT_ITEMS_PER_PAGE = 25; // 5×5 panel
+/* ---------- 4) State ---------- */
 let currentPage = 1;
 let itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 let filtered = [...TASKS];
 let videoObserver = null;
+const playingSet = new Set();
 
-// ===== 5) Helpers =====
+/* ---------- 5) Utilities ---------- */
 function paginate(arr, page, perPage) {
   const start = (page - 1) * perPage;
   return arr.slice(start, start + perPage);
 }
+function createEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text != null) el.textContent = text;
+  return el;
+}
 
-// ===== 6) DOM factories =====
+/* ---------- 6) Make one card ---------- */
 function makeTaskColumn(task) {
-  const col = document.createElement("div");
-  col.className = "column is-full-mobile is-half-tablet is-one-third-desktop is-one-fifth-widescreen";
+  const col = createEl(
+    "div",
+    "column is-full-mobile is-half-tablet is-one-third-desktop is-one-fifth-widescreen"
+  );
 
-  const card = document.createElement("div");
-  card.className = "card task-card";
+  const card = createEl("div", "card task-card");
 
   // Media
-  const figure = document.createElement("div");
-  figure.className = "card-image";
-  const wrap = document.createElement("div");
-  wrap.className = "video-wrap";
+  const figure = createEl("div", "card-image");
+  const wrap = createEl("div", "video-wrap");
 
   const video = document.createElement("video");
+  // Attributes
   video.setAttribute("playsinline", "");
   video.setAttribute("muted", "");
   video.setAttribute("loop", "");
   video.setAttribute("preload", "none");
   video.setAttribute("aria-label", `${task.title} preview`);
   if (task.poster) video.setAttribute("poster", task.poster);
-  video.dataset.src = task.src; // lazy-load
+  // Properties (iOS/Safari)
+  video.muted = true;
+  video.playsInline = true;
 
-  // Hover / tap to play
-  video.addEventListener("mouseenter", () => { if (video.readyState > 2) video.play(); });
-  video.addEventListener("mouseleave", () => { video.pause(); video.currentTime = 0; });
+  // Lazy-load source on intersection
+  video.dataset.src = task.src;
+
+  // Hover / tap controls
+  video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
+  video.addEventListener("mouseleave", () => { safeStop(video); });
   video.addEventListener("click", () => {
-    if (video.paused) video.play();
-    else { video.pause(); video.currentTime = 0; }
+    if (video.paused) safePlay(video); else safeStop(video);
   });
 
   // On-video label
-  const vlabel = document.createElement("span");
-  vlabel.className = "video-label";
-  vlabel.textContent = task.title;
+  const vlabel = createEl("span", "video-label", task.title);
 
   wrap.appendChild(video);
   wrap.appendChild(vlabel);
   figure.appendChild(wrap);
   card.appendChild(figure);
 
-  // Content
-  const content = document.createElement("div");
-  content.className = "card-content";
-  const media = document.createElement("div");
-  media.className = "media";
-  const mediaContent = document.createElement("div");
-  mediaContent.className = "media-content";
+  // Content under the video
+  const content = createEl("div", "card-content");
+  const media = createEl("div", "media");
+  const mediaContent = createEl("div", "media-content");
 
-  const title = document.createElement("p");
-  title.className = "title is-6";
-  title.textContent = task.title;
+  const title = createEl("p", "title is-6", task.title);
+  const subtitle = createEl("p", "content is-size-7", task.desc);
 
-  const subtitle = document.createElement("p");
-  subtitle.className = "content is-size-7";
-  subtitle.textContent = task.desc;
-
-  const tagsContainer = document.createElement("div");
+  const tagsContainer = createEl("div", null);
   (task.tags || []).forEach(t => {
-    const tag = document.createElement("span");
-    tag.className = "tag is-light task-badge";
-    tag.textContent = t;
+    const tag = createEl("span", "tag is-light task-badge", t);
     tagsContainer.appendChild(tag);
   });
 
@@ -128,11 +141,15 @@ function makeTaskColumn(task) {
   return col;
 }
 
-// ===== 7) Renderers =====
+/* ---------- 7) Renderers ---------- */
 function render() {
   const grid = document.getElementById("task-grid");
-  if (!grid) return; // safety
+  if (!grid) return;
   grid.innerHTML = "";
+
+  // stop any playing videos before re-render
+  playingSet.forEach(v => { try { v.pause(); } catch {} });
+  playingSet.clear();
 
   const pageItems = paginate(filtered, currentPage, itemsPerPage);
   pageItems.forEach(task => grid.appendChild(makeTaskColumn(task)));
@@ -155,44 +172,73 @@ function renderPagination() {
   prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
   nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; render(); } };
 
-  // Up to 7 page buttons
   const start = Math.max(1, currentPage - 3);
   const end = Math.min(totalPages, start + 6);
   for (let p = start; p <= end; p++) {
     const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.className = "pagination-link" + (p === currentPage ? " is-current" : "");
+    const a = createEl("a", "pagination-link" + (p === currentPage ? " is-current" : ""), String(p));
     a.setAttribute("aria-label", `Goto page ${p}`);
-    a.textContent = p;
     a.onclick = () => { currentPage = p; render(); };
     li.appendChild(a);
     list.appendChild(li);
   }
 }
 
-// ===== 8) Lazy-load & pause off-screen =====
+/* ---------- 8) Autoplay & lazy-load ---------- */
+function safePlay(video) {
+  if (playingSet.has(video)) return;
+  if (playingSet.size >= MAX_PLAYING) {
+    const first = playingSet.values().next().value;
+    if (first) safeStop(first);
+  }
+  video.play().then(() => {
+    playingSet.add(video);
+  }).catch(() => {
+    // If autoplay is blocked, user interaction (hover/click) still works.
+  });
+}
+function safeStop(video) {
+  try {
+    video.pause();
+    video.currentTime = 0;
+  } catch {}
+  playingSet.delete(video);
+}
+
 function setupIntersectionObservers() {
   if (videoObserver) videoObserver.disconnect();
+
   videoObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target;
+
       if (entry.isIntersecting) {
+        // Lazy-attach src once
         if (!video.dataset.loaded) {
           video.src = video.dataset.src;
           video.dataset.loaded = "1";
+
+          if (AUTOPREVIEW_ENABLED) {
+            const tryPlay = () => { safePlay(video); };
+            video.addEventListener("canplay", tryPlay, { once: true });
+            video.load(); // fetch metadata -> canplay
+          }
+        } else if (AUTOPREVIEW_ENABLED) {
+          safePlay(video);
         }
       } else {
-        video.pause();
-        video.currentTime = 0;
+        // Off-screen: stop
+        safeStop(video);
       }
     });
-  }, { root: null, rootMargin: "200px 0px", threshold: 0.01 });
+  }, { root: null, rootMargin: IO_ROOT_MARGIN, threshold: 0.01 });
 
   document.querySelectorAll("#task-grid video").forEach(v => videoObserver.observe(v));
 }
 
-// ===== 9) Wire up controls & boot =====
+/* ---------- 9) Wire up controls & boot ---------- */
 document.addEventListener("DOMContentLoaded", () => {
+  // Items per page
   const pps = document.getElementById("per-page-select");
   if (pps) {
     pps.value = String(DEFAULT_ITEMS_PER_PAGE);
@@ -203,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Search
   const search = document.getElementById("task-search");
   if (search) {
     search.addEventListener("input", (e) => {

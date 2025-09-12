@@ -84,6 +84,8 @@
   <!-- Favicon and App Icons -->
   <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
   <link rel="apple-touch-icon" href="static/images/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
   
   <!-- Critical CSS - Load synchronously -->
   <link rel="stylesheet" href="static/css/bulma.min.css">
@@ -113,6 +115,12 @@
   <script defer src="static/js/bulma-carousel.min.js"></script>
   <script defer src="static/js/bulma-slider.min.js"></script>
   <script defer src="static/js/index.js"></script>
+  
+  <style>
+  .publication-authors sup { font-size: 0.7em; vertical-align: super; margin-left: 2px; }
+  .publication-authors .author-block { display: inline; margin-right: .25rem; }
+  .publication-links .link-block { margin-right: .5rem; }
+  </style>
   
   <!-- Structured Data for Academic Papers -->
   <script type="application/ld+json">
@@ -281,86 +289,76 @@
 
   <main id="main-content">
   <section class="hero">
-    <div class="hero-body">
-      <div class="container is-max-desktop">
-        <div class="columns is-centered">
-          <div class="column has-text-centered">
-            <!-- TODO: Replace with your paper title -->
-            <h1 class="title is-1 publication-title">COMFI: A Multimodal Industrial Human Motion Dataset for Markerless Motion Capture and Collaborative Robotics</h1>
-            <div class="is-size-5 publication-authors">
-              <!-- TODO: Replace with your paper authors and their personal links -->
-              <span class="author-block">
-                <a href="https://www.linkedin.com/in/kahina-chalabi-45a599298?originalSubdomain=fr" target="_blank">Kahina Chalabi</a>,</span>
-                <span class="author-block">
-                  <a href="https://maximesabbah.github.io/" target="_blank">Maxime Sabbah</a>,</span>
-                  <span class="author-block">
-                    <a href="linkedin.com/in/nicolas-gouget?originalSubdomain=fr" target="_blank">Nicolas Gouget</a>
-                  </span>
-                  <span class="author-block">
-                    <a href="https://www.linkedin.com/in/mohamed-adjel-56a011141?originalSubdomain=fr" target="_blank">Mohamed Adjel</a>
-                  </span>
-                  <span class="author-block">
-                    <a href="linkedin.com/in/krzy-woj?originalSubdomain=fr" target="_blank">Krzysztof Wojciechowski</a>
-                  </span>
-                  <span class="author-block">
-                    <a href="https://www.laas.fr/fr/homepages/bwatier/" target="_blank">Bruno Watier</a>
-                  </span>
-                  <span class="author-block">
-                    <a href="https://ipal.cnrs.fr/vincent-bonnet-personal-page/" target="_blank">Vincent Bonnet</a>
-                  </span>
-                </div>
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">
+            COMFI: A Multimodal Industrial Human Motion Dataset for Markerless Motion Capture and Collaborative Robotics
+          </h1>
 
-                  <div class="is-size-5 publication-authors">
-                    <!-- TODO: Replace with your institution and conference/journal info -->
-                    <span class="author-block">LAAS-CNRS<br>International Journal of Robotics Research (IJRR) 2025</span>
-                  </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/kahina-chalabi-45a599298?originalSubdomain=fr" target="_blank" rel="noopener noreferrer">Kahina Chalabi</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://maximesabbah.github.io/" target="_blank" rel="noopener noreferrer">Maxime Sabbah</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/nicolas-gouget?originalSubdomain=fr" target="_blank" rel="noopener noreferrer">Nicolas Gouget</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/mohamed-adjel-56a011141?originalSubdomain=fr" target="_blank" rel="noopener noreferrer">Mohamed Adjel</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/krzy-woj?originalSubdomain=fr" target="_blank" rel="noopener noreferrer">Krzysztof Wojciechowski</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.laas.fr/fr/homepages/bwatier/" target="_blank" rel="noopener noreferrer">Bruno Watier</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://ipal.cnrs.fr/vincent-bonnet-personal-page/" target="_blank" rel="noopener noreferrer">Vincent Bonnet</a><sup>1</sup>
+            </span>
+          </div>
 
-                  <div class="column has-text-centered">
-                    <div class="publication-links">
-                         <!-- TODO: Update with your arXiv paper ID -->
-                      <span class="link-block">
-                        <a href="https://arxiv.org/pdf/<ARXIV PAPER ID>.pdf" target="_blank"
-                        class="external-link button is-normal is-rounded is-dark">
-                        <span class="icon">
-                          <i class="fas fa-file-pdf"></i>
-                        </span>
-                        <span>Paper</span>
-                      </a>
-                    </span>
+          <!-- Affiliations -->
+          <div class="is-size-6 publication-authors" style="margin-top:0.5rem">
+            <span class="author-block"><sup>1</sup> LAAS-CNRS, Toulouse, France</span><br>
+            <span class="author-block"><sup>2</sup> NaturalPad, Montpellier, France</span>
+          </div>
 
-                    <!-- TODO: Add your supplementary material PDF or remove this section -->
-                    <!-- <span class="link-block">
-                      <a href="static/pdfs/supplementary_material.pdf" target="_blank"
-                      class="external-link button is-normal is-rounded is-dark">
-                      <span class="icon">
-                        <i class="fas fa-file-pdf"></i>
-                      </span>
-                      <span>Supplementary</span>
-                    </a>
-                  </span> -->
+          <!-- Venue -->
+          <div class="is-size-5" style="margin-top:0.75rem">
+            International Journal of Robotics Research (IJRR) 2025
+          </div>
 
-                  <!-- TODO: Replace with your GitHub repository URL -->
-                  <span class="link-block">
-                    <a href="https://github.com/MaximeSabbah/comfi-usage" target="_blank"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <i class="fab fa-github"></i>
-                    </span>
-                    <span>Code</span>
-                  </a>
-                </span>
+          <!-- Links -->
+          <div class="publication-links" style="margin-top:1rem">
+            <span class="link-block">
+              <!-- Direct PDF from HAL -->
+              <a href="https://hal.science/<HAL_ID>/document" target="_blank"
+                 class="external-link button is-normal is-rounded is-dark" rel="noopener noreferrer" aria-label="PDF">
+                <span class="icon"><i class="fas fa-file-pdf" aria-hidden="true"></i></span>
+                <span>Paper</span>
+              </a>
+            </span>
 
-                <!-- TODO: Update with your arXiv paper ID -->
-                <span class="link-block">
-                  <a href="https://arxiv.org/abs/<ARXIV PAPER ID>" target="_blank"
-                  class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-            </div>
+            <span class="link-block">
+              <a href="https://github.com/MaximeSabbah/comfi-usage" target="_blank"
+                class="external-link button is-normal is-rounded is-dark" rel="noopener noreferrer" aria-label="Code">
+                <span class="icon"><i class="fab fa-github" aria-hidden="true"></i></span>
+                <span>Code</span>
+              </a>
+            </span>
+
+            <span class="link-block">
+              <!-- HAL landing page -->
+              <a href="https://hal.science/<HAL_ID>" target="_blank"
+                class="external-link button is-normal is-rounded is-dark" rel="noopener noreferrer" aria-label="HAL">
+                <span class="icon"><i class="ai ai-hal" aria-hidden="true"></i></span>
+                <span>HAL</span>
+              </a>
+            </span>
           </div>
         </div>
       </div>

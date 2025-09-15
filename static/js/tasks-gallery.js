@@ -43,14 +43,15 @@ const TASKS = TASK_NAMES.map(name => ({
 /* ---- State ---- */
 const MODE_ALL   = "all";
 const MODE_PAGED = "paged";
-let mode = MODE_ALL;          // default: All tasks
-let itemsPerPage = 10;        // fixed 10 per page
+let mode = MODE_ALL;              // default: All tasks
+let itemsPerPage = 10;            // fixed 10 per page
 let currentPage = 1;
 let filtered = [...TASKS];
 
+let featuredId = null;            // id of the currently featured task
 let videoObserver = null;
 const playingSet = new Set();
-const MAX_PLAYING = 6;        // cap concurrent playbacks
+const MAX_PLAYING = 6;            // cap concurrent playbacks
 const IO_ROOT_MARGIN = "200px 0px";
 
 /* ---- Helpers ---- */
@@ -64,11 +65,62 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
+function getTaskById(id) { return TASKS.find(t => t.id === id); }
+
+/* ---- Featured player ---- */
+function ensureFeaturedSelected() {
+  // Keep a valid selection from the current filtered list
+  if (!featuredId || !filtered.some(t => t.id === featuredId)) {
+    featuredId = filtered.length ? filtered[0].id : null;
+  }
+}
+function buildFeaturedNode(task) {
+  const wrap = el("div", "featured-wrap");
+  const inner = el("div", "featured-media");
+
+  const video = document.createElement("video");
+  video.setAttribute("playsinline", "");
+  video.setAttribute("muted", "");
+  video.setAttribute("loop", "");
+  video.setAttribute("preload", "none");
+  video.setAttribute("aria-label", `${task.title} featured preview`);
+  if (task.poster) video.setAttribute("poster", task.poster);
+  video.muted = true; video.playsInline = true; video.loop = true;
+
+  // lazy attach; observer will load + start
+  video.dataset.src = task.src;
+  video.addEventListener("canplay", () => { safePlay(video); }, { once: true });
+
+  // hover to restart behavior
+  video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
+  video.addEventListener("mouseleave", () => { safeStop(video); });
+
+  // Click on the featured video toggles play/pause
+  video.addEventListener("click", () => {
+    if (video.paused) safePlay(video); else safeStop(video);
+  });
+
+  const label = el("span", "video-label", task.title);
+
+  inner.appendChild(video);
+  inner.appendChild(label);
+  wrap.appendChild(inner);
+  return wrap;
+}
+function renderFeatured() {
+  const box = document.getElementById("task-featured");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!featuredId) return;
+  const task = getTaskById(featuredId);
+  if (!task) return;
+  box.appendChild(buildFeaturedNode(task));
+}
 
 /* ---- Card factory ---- */
 function makeTaskCard(task) {
   const col   = el("div", "column is-full-mobile is-half-tablet is-one-third-desktop is-one-fifth-widescreen");
-  const card  = el("div", "card task-card");
+  const card  = el("div", "card task-card" + (task.id === featuredId ? " is-selected" : ""));
 
   // Media
   const figure = el("div", "card-image");
@@ -87,11 +139,13 @@ function makeTaskCard(task) {
   video.dataset.src = task.src;
   video.addEventListener("canplay", () => { safePlay(video); }, { once: true });
 
-  // Optional hover/tap
+  // Hover restart behavior (kept)
   video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
   video.addEventListener("mouseleave", () => { safeStop(video); });
+
+  // Clicking a thumbnail promotes it to featured
   video.addEventListener("click", () => {
-    if (video.paused) safePlay(video); else safeStop(video);
+    setFeatured(task.id, { scrollIntoView: true });
   });
 
   const vlabel = el("span", "video-label", task.title);
@@ -117,12 +171,40 @@ function makeTaskCard(task) {
   return col;
 }
 
+/* ---- Featured selection API ---- */
+function setFeatured(id, opts = {}) {
+  if (featuredId === id) return;
+  featuredId = id;
+  // Re-render featured
+  renderFeatured();
+  // Repaint grid selection ring without rebuilding all videos
+  document.querySelectorAll("#task-grid .task-card").forEach(card => card.classList.remove("is-selected"));
+  const idx = filtered.findIndex(t => t.id === id);
+  if (idx !== -1) {
+    // find the corresponding card by title text (or we could add data-id attrs)
+    const titles = Array.from(document.querySelectorAll("#task-grid .task-card .title"));
+    const node = titles.find(n => n.textContent === getTaskById(id).title);
+    if (node) node.closest(".task-card").classList.add("is-selected");
+  }
+  // Reconnect observer so featured video is managed too
+  setupVideoObserver();
+
+  if (opts.scrollIntoView) {
+    document.getElementById("task-featured")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 /* ---- Renderers ---- */
 function itemsToRender() {
   return mode === MODE_ALL ? filtered : paginate(filtered, currentPage, itemsPerPage);
 }
 
 function render() {
+  ensureFeaturedSelected();
+  // Featured first
+  renderFeatured();
+
+  // Then the grid
   const grid = document.getElementById("task-grid");
   if (!grid) return;
   grid.innerHTML = "";
@@ -174,7 +256,7 @@ function renderPagination() {
   }
 }
 
-/* ---- Autoplay + lazy-load for videos ---- */
+/* ---- Autoplay + lazy-load for videos (featured + grid) ---- */
 function setupVideoObserver() {
   if (videoObserver) videoObserver.disconnect();
 
@@ -195,7 +277,8 @@ function setupVideoObserver() {
     });
   }, { root: null, rootMargin: IO_ROOT_MARGIN, threshold: 0.01 });
 
-  document.querySelectorAll("#task-grid video").forEach(v => videoObserver.observe(v));
+  document.querySelectorAll("#task-featured video, #task-grid video")
+    .forEach(v => videoObserver.observe(v));
 }
 
 function safePlay(video) {
@@ -211,7 +294,7 @@ function safeStop(video) {
   playingSet.delete(video);
 }
 
-/* ---- Wire up search + mode toggle + visibility ---- */
+/* ---- Search + mode toggle + visibility ---- */
 function applySearch(q) {
   const query = q.trim().toLowerCase();
   filtered = TASKS.filter(t =>
@@ -219,12 +302,13 @@ function applySearch(q) {
     (t.tags || []).some(tag => tag.toLowerCase().includes(query))
   );
   currentPage = 1;
+  ensureFeaturedSelected();
   render();
 }
 
 function hookVisibility() {
   document.addEventListener("visibilitychange", () => {
-    const vids = document.querySelectorAll("#task-grid video");
+    const vids = document.querySelectorAll("#task-featured video, #task-grid video");
     if (document.hidden) {
       vids.forEach(v => { try { v.pause(); } catch {} });
       playingSet.clear();

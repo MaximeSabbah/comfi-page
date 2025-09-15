@@ -38,6 +38,38 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- Brand / sponsor strip (top logos) --- */
+.brand-strip {
+  padding: .5rem 0;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.brand-strip .logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-strip img {
+  height: 44px;
+  width: auto;
+  filter: grayscale(100%);
+  opacity: .85;
+  transition: filter .2s, opacity .2s, transform .2s;
+}
+
+.brand-strip a:hover img {
+  filter: none;
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+@media (min-width: 1024px) {
+  .brand-strip img { height: 52px; }
+}
 
 /* Modern Button Styles */
 .button {
@@ -145,10 +177,11 @@ body {
   padding: 6rem 1.5rem 4rem;
 }
 
-.publication-authors {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
+/* --- Author line tweaks --- */
+.publication-authors sup { 
+  font-size: 0.7em; 
+  vertical-align: super; 
+  margin-left: 2px; 
 }
 
 .publication-venue {
@@ -200,9 +233,9 @@ body {
     color: var(--primary-hover) !important;
 }
 
-.author-block {
-  display: inline-block;
-  margin-right: 0.5rem;
+.author-block { 
+  display: inline;        /* previously inline-block in index.css; pick one and keep it consistent */
+  margin-right: .25rem;   /* was 0.5rem in index.css */
 }
 
 .publication-banner img {
@@ -214,6 +247,11 @@ body {
 .publication-banner img:hover {
   transform: scale(1.02);
   box-shadow: var(--shadow-xl);
+}
+
+/* Space between the “Paper / Code / HAL” buttons */
+.publication-links .link-block { 
+  margin-right: .5rem; 
 }
 
 /* Modern Video and Carousel Styling */
@@ -306,6 +344,56 @@ body {
   font-size: 0.875rem;
   color: var(--text-light);
   font-style: italic;
+}
+
+/* --- Task gallery (videos) --- */
+#task-gallery .video-wrap { 
+  position: relative; 
+  width: 100%; 
+  aspect-ratio: 16/9; 
+  overflow: hidden; 
+  border-radius: 12px; 
+}
+
+#task-gallery .video-wrap video { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block; 
+  background: #111; 
+}
+
+#task-gallery .video-label {
+  position: absolute; 
+  left: 8px; 
+  bottom: 8px;
+  background: rgba(10,10,10,.6); 
+  color: #fff;
+  padding: .25rem .5rem; 
+  border-radius: 6px; 
+  font-size: .8rem; 
+  line-height: 1;
+  backdrop-filter: blur(2px);
+}
+
+#task-gallery .task-card { 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+}
+
+#task-gallery .task-card .card-content { 
+  flex: 1; 
+}
+
+#task-gallery .task-badge { 
+  font-size: .7rem; 
+  margin-left: .25rem; 
+}
+
+/* Pagination buttons sizing (only used in paged mode) */
+#task-gallery .pagination-list .pagination-link { 
+  min-width: 2.25rem; 
 }
 
 /* Section Titles */

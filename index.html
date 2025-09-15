@@ -117,34 +117,6 @@
   <script defer src="static/js/index.js"></script>
   <script defer src="static/js/tasks-gallery.js"></script>
 
-  <style>
-  .publication-authors sup { font-size: 0.7em; vertical-align: super; margin-left: 2px; }
-  .publication-authors .author-block { display: inline; margin-right: .25rem; }
-  .publication-links .link-block { margin-right: .5rem; }
-  </style>
-
-  <style>
-  /* Maintain aspect ratio for videos */
-  .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 12px; }
-  .video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; background: #111; }
-
-  /* On-video label */
-  .video-label {
-    position: absolute; left: 8px; bottom: 8px;
-    background: rgba(10,10,10,.6); color: #fff;
-    padding: .25rem .5rem; border-radius: 6px; font-size: .8rem; line-height: 1;
-    backdrop-filter: blur(2px);
-  }
-
-  /* Card layout */
-  .task-card { height: 100%; display: flex; flex-direction: column; }
-  .task-card .card-content { flex: 1; }
-  .task-badge { font-size: .7rem; margin-left: .25rem; }
-
-  /* Optional: tighter pagination spacing */
-  .pagination-list .pagination-link { min-width: 2.25rem; }
-  </style>
-
   
   <!-- Structured Data for Academic Papers -->
   <script type="application/ld+json">
@@ -256,6 +228,29 @@
   </script>
 </head>
 <body>
+
+  <!-- Brand / sponsor strip -->
+  <section class="brand-strip" aria-label="Affiliations and supporting projects">
+    <div class="container is-max-desktop">
+      <div class="logos">
+        <a href="https://www.cnrs.fr" target="_blank" rel="noopener" aria-label="CNRS">
+        <img src="static/logos/cnrs.svg" alt="CNRS">
+        </a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Institution 2">
+          <img src="static/logos/cnrs.svg" alt="Institution 2 logo" loading="lazy">
+        </a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Institution 3">
+          <img src="static/logos/cnrs.svg" alt="Institution 3 logo" loading="lazy">
+        </a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Project 1">
+          <img src="static/logos/cnrs.svg" alt="Project 1 logo" loading="lazy">
+        </a>
+        <a href="#" target="_blank" rel="noopener" aria-label="Project 2">
+          <img src="static/logos/cnrs.svg" alt="Project 2 logo" loading="lazy">
+        </a>
+      </div>
+    </div>
+  </section>
 
 
   <!-- Scroll to Top Button -->

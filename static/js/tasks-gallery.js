@@ -21,9 +21,13 @@ const LABEL_OVERRIDES = {
   bolting_sat: "Bolting (sat)",
   sanding_sat: "Sanding (sat)",
   welding_sat: "Welding (sat)",
+  hitting_sat: "Hitting (sat)",
   robot_sanding: "Robot Sanding",
-  robot_welding: "Robot Welding"
+  robot_welding: "Robot Welding",
+  lifting_fast: "Lifting (fast)",
+  crouch_object: "Crouch (object)"
 };
+
 const humanize = n => LABEL_OVERRIDES[n] ?? n.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 const baseTag  = n => n.startsWith("robot_") ? "robot" : n.split("_")[0];
 

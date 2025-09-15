@@ -79,26 +79,32 @@ function buildFeaturedNode(task) {
   const inner = el("div", "featured-media");
 
   const video = document.createElement("video");
+  // Always-on playback like a GIF
   video.setAttribute("playsinline", "");
   video.setAttribute("muted", "");
   video.setAttribute("loop", "");
-  video.setAttribute("preload", "none");
+  video.setAttribute("autoplay", "");       // NEW: force autoplay
+  video.setAttribute("preload", "auto");    // NEW: eager load for instant start
   video.setAttribute("aria-label", `${task.title} featured preview`);
   if (task.poster) video.setAttribute("poster", task.poster);
-  video.muted = true; video.playsInline = true; video.loop = true;
 
-  // lazy attach; observer will load + start
+  // Properties for iOS/Safari
+  video.muted = true;
+  video.playsInline = true;
+  video.loop = true;
+  video.autoplay = true;
+
+  // Load NOW (not lazily) so it starts immediately
   video.dataset.src = task.src;
-  video.addEventListener("canplay", () => { safePlay(video); }, { once: true });
+  video.src = task.src;
+  video.dataset.loaded = "1";  // mark as loaded so the observer won't override
+  video.addEventListener("canplay", () => {
+    // Start and keep playing; ignore user interactions
+    video.play().catch(() => {});
+  }, { once: true });
 
-  // hover to restart behavior
-  video.addEventListener("mouseenter", () => { if (video.readyState > 2) safePlay(video); });
-  video.addEventListener("mouseleave", () => { safeStop(video); });
-
-  // Click on the featured video toggles play/pause
-  video.addEventListener("click", () => {
-    if (video.paused) safePlay(video); else safeStop(video);
-  });
+  // IMPORTANT: remove hover/click handlers for featured — we want it to keep looping
+  // (So no mouseenter/mouseleave/click listeners here.)
 
   const label = el("span", "video-label", task.title);
 

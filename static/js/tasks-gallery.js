@@ -83,12 +83,12 @@ function buildFeaturedNode(task) {
   video.setAttribute("playsinline", "");
   video.setAttribute("muted", "");
   video.setAttribute("loop", "");
-  video.setAttribute("autoplay", "");       // NEW: force autoplay
-  video.setAttribute("preload", "auto");    // NEW: eager load for instant start
+  video.setAttribute("autoplay", "");     // ensure autoplay
+  video.setAttribute("preload", "auto");  // eager load for instant start
   video.setAttribute("aria-label", `${task.title} featured preview`);
   if (task.poster) video.setAttribute("poster", task.poster);
 
-  // Properties for iOS/Safari
+  // Properties (iOS/Safari are picky)
   video.muted = true;
   video.playsInline = true;
   video.loop = true;
@@ -97,17 +97,20 @@ function buildFeaturedNode(task) {
   // Load NOW (not lazily) so it starts immediately
   video.dataset.src = task.src;
   video.src = task.src;
-  video.dataset.loaded = "1";  // mark as loaded so the observer won't override
-  video.addEventListener("canplay", () => {
-    // Start and keep playing; ignore user interactions
-    video.play().catch(() => {});
-  }, { once: true });
+  video.dataset.loaded = "1"; // mark as loaded
 
-  // IMPORTANT: remove hover/click handlers for featured — we want it to keep looping
-  // (So no mouseenter/mouseleave/click listeners here.)
+  // Start and keep playing
+  const tryPlay = () => video.play().catch(() => {});
+  video.addEventListener("canplay", tryPlay, { once: true });
+
+  // If anything (including legacy handlers) pauses it, resume immediately
+  video.addEventListener("pause", () => {
+    if (!document.hidden) tryPlay();
+  });
+
+  // IMPORTANT: no hover/click handlers on the featured video
 
   const label = el("span", "video-label", task.title);
-
   inner.appendChild(video);
   inner.appendChild(label);
   wrap.appendChild(inner);
@@ -283,9 +286,10 @@ function setupVideoObserver() {
     });
   }, { root: null, rootMargin: IO_ROOT_MARGIN, threshold: 0.01 });
 
-  document.querySelectorAll("#task-featured video, #task-grid video")
-    .forEach(v => videoObserver.observe(v));
+  // Observe ONLY the grid thumbnails (featured runs independently)
+  document.querySelectorAll("#task-grid video").forEach(v => videoObserver.observe(v));
 }
+
 
 function safePlay(video) {
   if (playingSet.has(video)) return;

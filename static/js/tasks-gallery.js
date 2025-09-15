@@ -5,14 +5,11 @@
    ========================================================== */
 "use strict";
 
-/* ---- Your files ---- */
-const DEMO_SRC = "static/videos/demo.mp4";        // same clip for all tasks
-const GENERIC_POSTER = "static/posters/demo.jpg"; // same poster for all tasks generated with :  ffmpeg -i static/videos/demo.mp4 -frames:v 1 -q:v 2 static/posters/demo.jpg
 
 /* ---- Task list ---- */
 const TASK_NAMES = [
   "bolting","bolting_sat","crouch","crouch_object","hitting","hitting_sat","jump","lifting",
-  "lifting_fast","lower","overhead","overhead_front","robot_sanding","robot_welding",
+  "lifting_fast","lower","overhead","robot_sanding","robot_welding",
   "sanding","sanding_sat","sit_to_stand","squat","static","upper","walk","walk_front",
   "welding","welding_sat"
 ];
@@ -21,7 +18,6 @@ const TASK_NAMES = [
 const LABEL_OVERRIDES = {
   sit_to_stand: "Sit-to-Stand",
   walk_front: "Walk (front)",
-  overhead_front: "Overhead (front)",
   bolting_sat: "Bolting (sat)",
   sanding_sat: "Sanding (sat)",
   welding_sat: "Welding (sat)",
@@ -31,12 +27,12 @@ const LABEL_OVERRIDES = {
 const humanize = n => LABEL_OVERRIDES[n] ?? n.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 const baseTag  = n => n.startsWith("robot_") ? "robot" : n.split("_")[0];
 
-/* ---- Build task objects ---- */
+/* ---- Build task objects (per-task assets) ---- */
 const TASKS = TASK_NAMES.map(name => ({
   id: name,
   title: humanize(name),
-  src: DEMO_SRC,
-  poster: GENERIC_POSTER,
+  src: `static/videos/${name}_preview.mp4`,
+  poster: `static/posters/${name}_poster.jpg`,
   tags: [baseTag(name)]
 }));
 

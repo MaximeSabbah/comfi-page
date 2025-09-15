@@ -48,7 +48,7 @@ let itemsPerPage = 10;            // fixed 10 per page
 let currentPage = 1;
 let filtered = [...TASKS];
 
-let featuredId = null;            // id of the currently featured task
+let featuredId = "robot_sanding";            // id of the currently featured task
 let videoObserver = null;
 const playingSet = new Set();
 const MAX_PLAYING = 6;            // cap concurrent playbacks

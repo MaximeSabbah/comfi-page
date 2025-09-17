@@ -71,15 +71,13 @@
 
     { id:"robot",      title:"robot",      col:"right-closer", row:1,
       info:{ rate:"Raw ~200 Hz; aligned 40 Hz",
-        desc:"Robot telemetry for the collaborative sanding/welding tasks (raw ROS bags and aligned with cams CSV).",
+        desc:"Robot telemetry for the collaborative tasks (raw ROS bags and aligned with cams CSV).",
         groups:[
           {id:"raw", title:"Raw", note:"200 Hz ROS bag", paths:[
-            "COMFI/robot/raw/<ID>/robot_sanding.bag",
-            "COMFI/robot/raw/<ID>/robot_welding.bag"
+            "COMFI/robot/raw/<ID>/{task}.bag"
           ]},
           {id:"aligned", title:"Aligned", note:"40 Hz CSV", paths:[
-            "COMFI/robot/aligned/<ID>/robot_sanding.csv",
-            "COMFI/robot/aligned/<ID>/robot_welding.csv"
+            "COMFI/robot/aligned/<ID>/{task}.csv"
           ]}
         ] } }
   ];

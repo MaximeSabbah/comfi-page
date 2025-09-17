@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VERSION = "2.4";
+  const VERSION = "2.6";
   console.log(`✅ dataset-map.js v${VERSION}`);
 
   /* --- Data --- */
@@ -12,65 +12,113 @@
     "welding","welding_sat"
   ];
 
-  // Layout rows: row 0 (top), row 1 (bottom)
+  /* Three rows (top / middle / bottom) */
   const MODS = [
-    { id:"videos",     title:"Videos",     rate:"≈ 40 Hz per camera",
-      desc:"RGB videos from multiple synchronized viewpoints.", row:0,
-      paths:["COMFI/<ID>/<task>/camera_0.mp4","COMFI/<ID>/<task>/camera_2.mp4","COMFI/<ID>/<task>/camera_4.mp4","COMFI/<ID>/<task>/camera_6.mp4"] },
-    { id:"forces",     title:"Forces",     rate:"Raw 1000 Hz → aligned 40 Hz",
-      desc:"Force signals only (no IMU). Raw high-rate data and time-aligned CSV.", row:0,
-      paths:["COMFI/<ID>/<task>/raw/{task}_devices.csv","COMFI/<ID>/<task>/aligned/{task}_devices.csv"] },
-    { id:"cam_params", title:"Cam Params", rate:"",
-      desc:"Per-subject camera intrinsics/extrinsics and calibration images.", row:0,
-      paths:["COMFI/<ID>/cam_params.yaml","COMFI/<ID>/images/*.png"] },
-    { id:"mocap",      title:"Mocap",      rate:"C3D 100 Hz; aligned CSV 40 Hz",
-      desc:"Optical motion capture: markers, model markers, joint centers & angles.", row:1,
-      paths:["COMFI/<ID>/<task>/{task}.c3d","COMFI/<ID>/<task>/raw/*.csv","COMFI/<ID>/<task>/aligned/joint_angles.csv","COMFI/<ID>/<task>/aligned/joint_center.csv","COMFI/<ID>/<task>/aligned/markers.csv","COMFI/<ID>/<task>/aligned/markers_model.csv","COMFI/<ID>/<ID>.vsk"] },
-    { id:"robot",      title:"Robot",      rate:"Raw ~200 Hz → aligned 40 Hz",
-      desc:"Robot topics for sanding/welding tasks (ROS bag + aligned CSV).", row:1,
-      paths:["COMFI/<ID>/raw/robot_sanding.bag","COMFI/<ID>/raw/robot_welding.bag","COMFI/<ID>/aligned/robot_sanding.csv","COMFI/<ID>/aligned/robot_welding.csv"] },
-    { id:"metadata",   title:"Metadata",   rate:"",
-      desc:"Per-subject descriptors and scaled URDF.", row:1,
-      paths:["COMFI/<ID>/metadata/<ID>.yaml","COMFI/<ID>/metadata/<ID>_scaled.urdf"] }
+    { id:"videos",     title:"Videos",     row:0,
+      info:{ rate:"≈ 40 Hz per camera", groups:[
+        {title:"Files", paths:[
+          "COMFI/<ID>/<task>/camera_0.mp4",
+          "COMFI/<ID>/<task>/camera_2.mp4",
+          "COMFI/<ID>/<task>/camera_4.mp4",
+          "COMFI/<ID>/<task>/camera_6.mp4"
+        ]}
+      ], desc:"RGB videos from multiple synchronized viewpoints."}
+    },
+    { id:"cam_params", title:"Cam Params", row:0,
+      info:{ rate:"", groups:[
+        {title:"Files", paths:[
+          "COMFI/<ID>/cam_params.yaml",
+          "COMFI/<ID>/images/*.png"
+        ]}
+      ], desc:"Per-subject camera intrinsics/extrinsics and calibration images."}
+    },
+
+    { id:"mocap",      title:"Mocap",      row:1,
+      info:{ rate:"C3D 100 Hz; aligned CSV 40 Hz", groups:[
+        {title:"Raw", note:"C3D + raw CSV", paths:[
+          "COMFI/<ID>/<task>/{task}.c3d",
+          "COMFI/<ID>/<task>/raw/*.csv"
+        ]},
+        {title:"Aligned", note:"Common 40 Hz timeline", paths:[
+          "COMFI/<ID>/<task>/aligned/joint_angles.csv",
+          "COMFI/<ID>/<task>/aligned/joint_center.csv",
+          "COMFI/<ID>/<task>/aligned/markers.csv",
+          "COMFI/<ID>/<task>/aligned/markers_model.csv"
+        ]},
+        {title:"Subject calibration", paths:[
+          "COMFI/<ID>/<ID>.vsk"
+        ]}
+      ], desc:"Optical motion capture: markers, model markers, joint centers & angles."}
+    },
+    { id:"metadata",   title:"Metadata",   row:1,
+      info:{ rate:"", groups:[
+        {title:"Files", paths:[
+          "COMFI/<ID>/metadata/<ID>.yaml",
+          "COMFI/<ID>/metadata/<ID>_scaled.urdf"
+        ]}
+      ], desc:"Per-subject descriptors and scaled URDF."}
+    },
+
+    { id:"forces",     title:"Forces",     row:2,
+      info:{ rate:"Raw 1000 Hz → aligned 40 Hz", groups:[
+        {title:"Raw", note:"1000 Hz", paths:[
+          "COMFI/<ID>/<task>/raw/{task}_devices.csv"
+        ]},
+        {title:"Aligned", note:"40 Hz", paths:[
+          "COMFI/<ID>/<task>/aligned/{task}_devices.csv"
+        ]}
+      ], desc:"Force signals only (no IMU). Raw high-rate data and time-aligned CSV."}
+    },
+    { id:"robot",      title:"Robot",      row:2,
+      info:{ rate:"Raw ~200 Hz → aligned 40 Hz", groups:[
+        {title:"Raw", note:"ROS bag", paths:[
+          "COMFI/<ID>/raw/robot_sanding.bag",
+          "COMFI/<ID>/raw/robot_welding.bag"
+        ]},
+        {title:"Aligned", note:"40 Hz CSV", paths:[
+          "COMFI/<ID>/aligned/robot_sanding.csv",
+          "COMFI/<ID>/aligned/robot_welding.csv"
+        ]}
+      ], desc:"Robot topics for sanding/welding tasks (ROS bag + aligned CSV)."}
+    }
   ];
 
   /* --- Utils --- */
   const $ = s => document.querySelector(s);
-  function resolvePath(s, id, task){
-    return s.replace(/<ID>/g,id).replace(/<id>/g,id).replace(/<task>/g,task).replace(/\{task\}/g,task);
-  }
-  async function copyText(text, btn){
+  const resolvePath = (s, id, task) =>
+    s.replace(/<ID>/g,id).replace(/<id>/g,id).replace(/<task>/g,task).replace(/\{task\}/g,task);
+  const copyText = async (text, btn) => {
     try { await navigator.clipboard.writeText(text); btn.textContent = "Copied!"; }
     catch { btn.textContent = "Copy failed"; }
     finally { setTimeout(()=>btn.textContent="Copy", 1100); }
-  }
+  };
 
   /* --- Tweakable layout constants --- */
   const NODE_W = 180;
   const NODE_H = 56;
   const ROOT_Y = 100;
-  const GAP_Y  = 140;          // larger gap to avoid collisions
-  const MARGIN_X_MIN = 160;    // side padding so edge nodes don't crop
-  const CANVAS_MIN_H = 580;
-  const ROOT_PAD = 16;         // spacing along COMFI bottom edge for connector starts
+  const GAP_Y  = 120;          // gap between rows
+  const MARGIN_X_MIN = 180;    // generous side margins
+  const CANVAS_MIN_H = 660;    // taller than before
+  const ROOT_PAD = 16;         // spacing along COMFI bottom for connector starts
 
   /* --- State --- */
   let svg, nodes={}, pop=null, activeId=null, hintEl=null;
 
-  /* --- Build SVG --- */
+  /* --- Build --- */
   function buildSVG(){
     nodes = {};
     const wrap = $("#ds-svg-wrap"); if (!wrap) return;
     wrap.innerHTML = "";
 
-    // Hint badge (shown initially)
+    // Hint (shown initially)
     hintEl = document.createElement("div");
     hintEl.className = "ds-hint";
     hintEl.textContent = "Tip: click a block to see paths";
     wrap.appendChild(hintEl);
 
-    const W = Math.max(1300, wrap.clientWidth + 360);
-    const H = Math.max(CANVAS_MIN_H, ROOT_Y + GAP_Y*2 + 220);
+    const W = Math.max(1400, wrap.clientWidth + 400); // very wide virtual canvas
+    const H = Math.max(CANVAS_MIN_H, ROOT_Y + GAP_Y*3 + 240);
 
     svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -81,21 +129,20 @@
     const rootX = W/2;
     addNode({id:"root", title:"COMFI"}, rootX, ROOT_Y, true);
 
-    const top = MODS.filter(m=>m.row===0);
-    const bot = MODS.filter(m=>m.row===1);
+    // rows
+    placeRow(MODS.filter(m=>m.row===0), rootX, ROOT_Y + GAP_Y, W);
+    placeRow(MODS.filter(m=>m.row===1), rootX, ROOT_Y + GAP_Y*2, W);
+    placeRow(MODS.filter(m=>m.row===2), rootX, ROOT_Y + GAP_Y*3, W);
 
-    placeRow(top, rootX, ROOT_Y + GAP_Y, W);
-    placeRow(bot, rootX, ROOT_Y + GAP_Y*2, W);
-
-    // Order children left→right; give each a unique start position on COMFI bottom
-    const children = MODS.map(m => nodes[m.id]).sort((a,b)=>a.cx - b.cx);
+    // fan-out connectors with distinct start points on COMFI bottom
+    const kids = MODS.map(m=>nodes[m.id]).sort((a,b)=>a.cx - b.cx);
     const startLeft  = rootX - NODE_W/2 + ROOT_PAD;
     const startRight = rootX + NODE_W/2 - ROOT_PAD;
-    const step = (children.length > 1) ? (startRight - startLeft) / (children.length - 1) : 0;
+    const step = (kids.length>1) ? (startRight - startLeft) / (kids.length - 1) : 0;
 
-    children.forEach((ch, i) => {
-      const sx = (children.length === 1) ? rootX : startLeft + i*step;
-      addCurve(sx, ROOT_Y + NODE_H/2, ch.cx, ch.cy - NODE_H/2);
+    kids.forEach((ch, i) => {
+      const sx = (kids.length === 1) ? rootX : startLeft + i*step;
+      addCurve(sx, ROOT_Y + NODE_H/2, ch.cx, ch.cy - NODE_H/2, ch.row);
     });
 
     wrap.appendChild(svg);
@@ -122,43 +169,44 @@
     rect.setAttribute("height", NODE_H);
     g.appendChild(rect);
 
-    const text = document.createElementNS(svg.namespaceURI, "text");
-    text.setAttribute("x", cx);
-    text.setAttribute("y", cy + 5);
-    text.setAttribute("text-anchor","middle");
-    text.textContent = m.title || "COMFI";
-    g.appendChild(text);
+    const txt = document.createElementNS(svg.namespaceURI, "text");
+    txt.setAttribute("x", cx); txt.setAttribute("y", cy + 5);
+    txt.setAttribute("text-anchor","middle");
+    txt.textContent = m.title || "COMFI";
+    g.appendChild(txt);
 
     svg.appendChild(g);
 
     if (isRoot){
-      g.addEventListener("click", () => { clearActive(); });
+      g.addEventListener("click", clearActive);               // clicking COMFI = close
     } else {
-      g.addEventListener("click", () => toggleMod(m));
+      g.addEventListener("click", () => toggleMod(m));        // toggle on/off
     }
 
-    nodes[m.id] = { g, rect, cx, cy, row: m.row };
+    nodes[m.id] = { g, cx, cy, row:m.row };
   }
 
-  function addCurve(x1,y1,x2,y2){
-    // cubic Bezier with fan-out (prevents overlay) and gentle bend
-    const dx = x2 - x1;
+  function addCurve(x1,y1,x2,y2,row){
+    // row-specific curvature so paths travel in separate vertical "channels"
     const dy = y2 - y1;
-    const bend = Math.min(80, Math.abs(dy) * 0.5);
-    const c1x = x1 + dx * 0.18;  // fan horizontally from COMFI
-    const c1y = y1 + bend * 0.7;
-    const c2x = x2 - dx * 0.18;  // and converge toward child
-    const c2y = y2 - bend * 0.7;
+    const bend = [50, 90, 130][row] || 80; // top/mid/bottom separation
+    const dx = x2 - x1;
 
-    const path = document.createElementNS(svg.namespaceURI, "path");
-    path.setAttribute("d", `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`);
-    path.setAttribute("class","ds-connector");
-    svg.appendChild(path);
+    const c1x = x1 + dx * 0.20;
+    const c1y = y1 + Math.sign(dy) * bend * 0.7;
+    const c2x = x2 - dx * 0.20;
+    const c2y = y2 - Math.sign(dy) * bend * 0.7;
+
+    const p = document.createElementNS(svg.namespaceURI, "path");
+    p.setAttribute("d", `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`);
+    p.setAttribute("class","ds-connector");
+    svg.appendChild(p);
   }
 
   /* --- Popover / selection --- */
   function toggleMod(mod){
-    if (activeId === mod.id) { // toggle off
+    // toggle behavior
+    if (activeId === mod.id){
       clearActive();
       return;
     }
@@ -185,33 +233,50 @@
     const header = document.createElement("div");
     header.className = "ds-pop-header";
     header.textContent = mod.title;
-    const rate = document.createElement("span"); rate.className="ds-rate"; rate.textContent = mod.rate || "";
-    header.appendChild(rate);
+    if (mod.info.rate){
+      const rate = document.createElement("span");
+      rate.className = "ds-rate"; rate.textContent = mod.info.rate;
+      header.appendChild(rate);
+    }
 
     const body = document.createElement("div"); body.className = "ds-pop-body";
-    const desc = document.createElement("div"); desc.className="ds-desc"; desc.textContent = mod.desc || "";
-    body.appendChild(desc);
+    if (mod.info.desc){
+      const desc = document.createElement("div");
+      desc.className="ds-desc"; desc.textContent = mod.info.desc;
+      body.appendChild(desc);
+    }
 
     const subj = $("#ds-subject").value || "<ID>";
     const task = $("#ds-task").value || "<task>";
-    mod.paths.forEach(p=>{
-      const resolved = resolvePath(p, subj, task);
-      const row = document.createElement("div"); row.className="ds-path-row";
-      const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
-      const btn = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
-      btn.onclick = ()=>copyText(resolved, btn);
-      row.appendChild(code); row.appendChild(btn); body.appendChild(row);
+    (mod.info.groups || []).forEach(gr => {
+      const h = document.createElement("div");
+      h.className = "ds-subhead";
+      h.textContent = gr.title || "";
+      if (gr.note){
+        const n = document.createElement("span"); n.className="ds-subnote"; n.textContent = `(${gr.note})`;
+        h.appendChild(n);
+      }
+      body.appendChild(h);
+
+      (gr.paths || []).forEach(pth => {
+        const resolved = resolvePath(pth, subj, task);
+        const row = document.createElement("div"); row.className="ds-path-row";
+        const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
+        const btn = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
+        btn.onclick = ()=>copyText(resolved, btn);
+        row.appendChild(code); row.appendChild(btn); body.appendChild(row);
+      });
     });
 
     pop.appendChild(header); pop.appendChild(body); wrap.appendChild(pop);
-
     positionPopover(pop, node);
-    window.addEventListener("resize", onRelayout, { passive:true });
-    wrap.addEventListener("scroll", onRelayout, { passive:true });
-    function onRelayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
+
+    window.addEventListener("resize", relayout, { passive:true });
+    wrap.addEventListener("scroll", relayout, { passive:true });
+    function relayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
   }
 
-  // For row 0 (top) → open ABOVE the node; row 1 (bottom) → BELOW the node
+  // Row 0 (top) -> open BELOW; Row 1 & 2 -> open ABOVE (so it doesn’t cover lower rows)
   function positionPopover(pop, node){
     const wrap = $("#ds-svg-wrap");
     const nbox = node.g.getBoundingClientRect();
@@ -222,12 +287,12 @@
     left = Math.max(12, Math.min(wrap.clientWidth - pop.offsetWidth - 12, left));
 
     let top;
-    if (node.row === 0) {
-      pop.dataset.arrow = "up";
-      top = nbox.top - wbox.top - pop.offsetHeight - gap;
-    } else {
+    if (node.row === 0){
       pop.dataset.arrow = "down";
       top = nbox.bottom - wbox.top + gap;
+    } else {
+      pop.dataset.arrow = "up";
+      top = nbox.top - wbox.top - pop.offsetHeight - gap;
     }
 
     pop.style.left = `${left}px`;
@@ -247,6 +312,6 @@
     subjSel.addEventListener("change", ()=>{ if (activeId && pop) showPopover(MODS.find(m=>m.id===activeId), nodes[activeId]); });
     taskSel.addEventListener("change", ()=>{ if (activeId && pop) showPopover(MODS.find(m=>m.id===activeId), nodes[activeId]); });
 
-    buildSVG(); // starts with no popover (full overview)
+    buildSVG();        // start: no popover, hint visible
   });
 })();

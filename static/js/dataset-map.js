@@ -1,9 +1,9 @@
 (() => {
   "use strict";
-  const VERSION = "2.0";
+  const VERSION = "2.2";
   console.log(`✅ dataset-map.js v${VERSION}`);
 
-  /* Data */
+  /* --- Data --- */
   const SUBJECT_IDS = ["1012","1118","1508","1602","1847","2112","2198","2307","3361","4162","4216","4279","4509","4612","4665","4687","4801","4827"];
   const DS_TASKS = [
     "bolting","bolting_sat","crouch","crouch_object","hitting","hitting_sat","jump","lifting",
@@ -12,27 +12,35 @@
     "welding","welding_sat"
   ];
 
-  /* Modalities (colors chosen; tweak to match your PDF) */
-  const COLORS = {
-    videos:     "#4F46E5", // indigo
-    mocap:      "#059669", // emerald
-    forces:     "#F59E0B", // amber
-    robot:      "#EF4444", // red
-    cam_params: "#06B6D4", // cyan
-    metadata:   "#8B5CF6"  // violet
-  };
-
+  // Two-row layout → avoids crowding + crossing
+  // row: 0 = top row (between root and bottom row), 1 = bottom row
   const MODS = [
-    { id:"videos", title:"Videos", rate:"≈ 40 Hz per camera",
+    { id:"videos",     title:"Videos",     rate:"≈ 40 Hz per camera",
       desc:"RGB videos from multiple synchronized viewpoints.",
+      row:0,
       paths:[
         "COMFI/<ID>/<task>/camera_0.mp4",
         "COMFI/<ID>/<task>/camera_2.mp4",
         "COMFI/<ID>/<task>/camera_4.mp4",
         "COMFI/<ID>/<task>/camera_6.mp4"
       ]},
-    { id:"mocap", title:"Mocap", rate:"C3D 100 Hz; aligned CSV 40 Hz",
+    { id:"forces",     title:"Forces",     rate:"Raw 1000 Hz → aligned 40 Hz",
+      desc:"Force signals only (no IMU). Raw high-rate data and time-aligned CSV.",
+      row:0,
+      paths:[
+        "COMFI/<ID>/<task>/raw/{task}_devices.csv",
+        "COMFI/<ID>/<task>/aligned/{task}_devices.csv"
+      ]},
+    { id:"cam_params", title:"Cam Params", rate:"",
+      desc:"Per-subject camera intrinsics/extrinsics and calibration images.",
+      row:0,
+      paths:[
+        "COMFI/<ID>/cam_params.yaml",
+        "COMFI/<ID>/images/*.png"
+      ]},
+    { id:"mocap",      title:"Mocap",      rate:"C3D 100 Hz; aligned CSV 40 Hz",
       desc:"Optical motion capture: markers, model markers, joint centers & angles.",
+      row:1,
       paths:[
         "COMFI/<ID>/<task>/{task}.c3d",
         "COMFI/<ID>/<task>/raw/*.csv",
@@ -42,36 +50,26 @@
         "COMFI/<ID>/<task>/aligned/markers_model.csv",
         "COMFI/<ID>/<ID>.vsk"
       ]},
-    { id:"forces", title:"Forces", rate:"Raw 1000 Hz → aligned 40 Hz",
-      desc:"Force signals only (no IMU). Raw high-rate data and time-aligned CSV.",
-      paths:[
-        "COMFI/<ID>/<task>/raw/{task}_devices.csv",
-        "COMFI/<ID>/<task>/aligned/{task}_devices.csv"
-      ]},
-    { id:"robot", title:"Robot", rate:"Raw ~200 Hz → aligned 40 Hz",
+    { id:"robot",      title:"Robot",      rate:"Raw ~200 Hz → aligned 40 Hz",
       desc:"Robot topics for sanding/welding tasks (ROS bag + aligned CSV).",
+      row:1,
       paths:[
         "COMFI/<ID>/raw/robot_sanding.bag",
         "COMFI/<ID>/raw/robot_welding.bag",
         "COMFI/<ID>/aligned/robot_sanding.csv",
         "COMFI/<ID>/aligned/robot_welding.csv"
       ]},
-    { id:"cam_params", title:"Cam Params", rate:"",
-      desc:"Per-subject camera intrinsics/extrinsics and calibration images.",
-      paths:[
-        "COMFI/<ID>/cam_params.yaml",
-        "COMFI/<ID>/images/*.png"
-      ]},
-    { id:"metadata", title:"Metadata", rate:"",
+    { id:"metadata",   title:"Metadata",   rate:"",
       desc:"Per-subject descriptors and scaled URDF.",
+      row:1,
       paths:[
         "COMFI/<ID>/metadata/<ID>.yaml",
         "COMFI/<ID>/metadata/<ID>_scaled.urdf"
       ]}
   ];
 
-  /* Utils */
-  const $ = sel => document.querySelector(sel);
+  /* --- Utils --- */
+  const $ = s => document.querySelector(s);
   function resolvePath(s, id, task){
     return s.replace(/<ID>/g,id).replace(/<id>/g,id).replace(/<task>/g,task).replace(/\{task\}/g,task);
   }
@@ -80,209 +78,188 @@
     catch { btn.textContent = "Copy failed"; }
     finally { setTimeout(()=>btn.textContent="Copy", 1100); }
   }
-  function lighten(hex, amt=0.82){ // quick tint for fill
-    // hex -> rgb -> mix with white
-    const c = hex.replace("#",""); const r=parseInt(c.substr(0,2),16), g=parseInt(c.substr(2,2),16), b=parseInt(c.substr(4,2),16);
-    const mix = (v)=>Math.round(255 - (255 - v)*amt);
-    return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
-  }
 
-  /* Layout + drawing */
-  let activeId = "videos";
-  let nodesCache = {}; // id -> {g, rect, cx, cy}
-  let svgEl = null;
+  /* --- Layout constants (tweak here) --- */
+  const NODE_W = 180;
+  const NODE_H = 56;
+  const ROOT_Y = 100;
+  const GAP_Y  = 120;     // vertical gap root→top row and between rows
+  const MARGIN_X_MIN = 140; // side margins to avoid cropping
+  const CANVAS_MIN_H = 560;
+
+  /* --- Drawing --- */
+  let svg, nodes = {}, pop;
 
   function buildSVG(){
-    nodesCache = {};
+    nodes = {};
     const wrap = $("#ds-svg-wrap"); if (!wrap) return;
     wrap.innerHTML = "";
 
-    const W = wrap.clientWidth < 700 ? 900 : 1200;  // virtual width; scales to 100%
-    const H = 520;
-    const rootY = 80, rootW = 140, rootH = 44;
-    const topY = 240, botY = 340;
-    const marginX = 80;
+    const W = Math.max(1200, wrap.clientWidth + 300); // virtual width; plenty of side room
+    const H = Math.max(CANVAS_MIN_H, ROOT_Y + GAP_Y*2 + 200);
 
-    const svgNS = "http://www.w3.org/2000/svg";
-    svgEl = document.createElementNS(svgNS, "svg");
-    svgEl.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    svgEl.setAttribute("width", "100%");
-    svgEl.setAttribute("height", "100%");
-    svgEl.style.display = "block";
+    svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("width","100%");
+    svg.setAttribute("height","100%");
+    svg.style.display = "block";
 
-    // Root
     const rootX = W/2;
-    addNode({id:"root", title:"COMFI"}, rootX, rootY, 140, rootH, "#64748B"); // slate
-    // Modalities across two staggered rows
-    const n = MODS.length; // 6
-    const span = (W - 2*marginX) / (n - 1);
-    MODS.forEach((m, i) => {
-      const cx = marginX + i*span;
-      const cy = (i % 2 === 0) ? topY : botY;
-      addConnector(rootX, rootY + rootH/2, cx, cy - 28);
-      addNode(m, cx, cy, 170, 56, COLORS[m.id]);
+    addNode({id:"root", title:"COMFI"}, rootX, ROOT_Y, true);
+
+    // Split by rows and space evenly per row
+    const top = MODS.filter(m=>m.row===0);
+    const bot = MODS.filter(m=>m.row===1);
+
+    placeRow(top, rootX, ROOT_Y + GAP_Y, W);
+    placeRow(bot, rootX, ROOT_Y + GAP_Y*2, W);
+
+    // Connectors as gentle cubic curves landing on top edge of child
+    MODS.forEach(m=>{
+      const ch = nodes[m.id];
+      addCurve(rootX, ROOT_Y + NODE_H/2, ch.cx, ch.cy - NODE_H/2);
     });
 
-    wrap.appendChild(svgEl);
-    activateNode(activeId);
+    wrap.appendChild(svg);
   }
 
-  function addNode(modOrRoot, cx, cy, w, h, color){
-    const svgNS = svgEl.namespaceURI;
-    const g = document.createElementNS(svgNS, "g");
+  function placeRow(arr, rootX, y, W){
+    const marginX = Math.max(MARGIN_X_MIN, W*0.08);
+    const span = (W - 2*marginX) / (arr.length - 1);
+    arr.forEach((m, i) => {
+      const cx = (arr.length===1) ? rootX : marginX + i*span;
+      addNode(m, cx, y, false);
+    });
+  }
+
+  function addNode(m, cx, cy, isRoot){
+    const g = document.createElementNS(svg.namespaceURI, "g");
     g.classList.add("ds-node");
-    g.dataset.id = modOrRoot.id;
+    g.dataset.id = m.id;
 
-    const rect = document.createElementNS(svgNS, "rect");
-    rect.setAttribute("x", cx - w/2);
-    rect.setAttribute("y", cy - h/2);
-    rect.setAttribute("width", w);
-    rect.setAttribute("height", h);
-    rect.setAttribute("rx", 10);
-    rect.setAttribute("ry", 10);
-    rect.style.stroke = "#d9d9e3";
-    rect.style.fill = "#fff";
+    const rect = document.createElementNS(svg.namespaceURI, "rect");
+    rect.setAttribute("x", cx - NODE_W/2);
+    rect.setAttribute("y", cy - NODE_H/2);
+    rect.setAttribute("width", NODE_W);
+    rect.setAttribute("height", NODE_H);
+    g.appendChild(rect);
 
-    const text = document.createElementNS(svgNS, "text");
+    const text = document.createElementNS(svg.namespaceURI, "text");
     text.setAttribute("x", cx);
     text.setAttribute("y", cy + 5);
-    text.setAttribute("text-anchor", "middle");
-    text.textContent = modOrRoot.title || "COMFI";
+    text.setAttribute("text-anchor","middle");
+    text.textContent = m.title || "COMFI";
+    g.appendChild(text);
 
-    g.appendChild(rect); g.appendChild(text); svgEl.appendChild(g);
+    svg.appendChild(g);
 
-    g.addEventListener("mouseenter", ()=>highlight(g, color));
-    g.addEventListener("mouseleave", ()=>dehighlight(g));
-    g.addEventListener("click", ()=>{ activeId = modOrRoot.id; activateNode(activeId); showPopover(modOrRoot.id, color, cx, cy); });
-
-    nodesCache[modOrRoot.id] = { g, rect, cx, cy, color };
+    if (!isRoot){
+      g.addEventListener("click", () => {
+        activate(m.id);
+        showPopover(m, cx, cy);
+      });
+    }
+    nodes[m.id] = { g, rect, cx, cy, row: m.row };
   }
 
-  function addConnector(x1,y1,x2,y2){
-    const l = document.createElementNS(svgEl.namespaceURI, "line");
-    l.setAttribute("x1", x1); l.setAttribute("y1", y1);
-    l.setAttribute("x2", x2); l.setAttribute("y2", y2);
-    l.setAttribute("class","ds-connector");
-    svgEl.appendChild(l);
+  function addCurve(x1,y1,x2,y2){
+    // cubic Bezier: start vertical drop, then fan to child top
+    const dy = Math.abs(y2 - y1);
+    const c1x = x1,           c1y = y1 + Math.min(60, dy*0.4);
+    const c2x = x2,           c2y = y2 - Math.min(60, dy*0.4);
+    const path = document.createElementNS(svg.namespaceURI, "path");
+    path.setAttribute("d", `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`);
+    path.setAttribute("class","ds-connector");
+    svg.appendChild(path);
   }
 
-  function highlight(g, color){
-    if (!g || g.dataset.id==="root") return;
-    const rect = g.querySelector("rect");
-    rect.style.stroke = color;
-    rect.style.fill = lighten(color, 0.9);
-  }
-  function dehighlight(g){
-    if (!g || g.dataset.id==="root" || g.dataset.id===activeId) return;
-    const rect = g.querySelector("rect");
-    rect.style.stroke = "#d9d9e3";
-    rect.style.fill = "#fff";
+  function activate(id){
+    Object.values(nodes).forEach(n => n.g.classList.toggle("active", n.g.dataset.id===id));
   }
 
-  function activateNode(id){
-    Object.values(nodesCache).forEach(n=>{
-      const isActive = n.g.dataset.id === id;
-      n.g.classList.toggle("active", isActive);
-      const rect = n.rect;
-      if (isActive && n.g.dataset.id!=="root"){
-        rect.style.stroke = n.color;
-        rect.style.fill = lighten(n.color, 0.85);
-      } else if (n.g.dataset.id!=="root"){
-        rect.style.stroke = "#d9d9e3";
-        rect.style.fill = "#fff";
-      }
-    });
-  }
-
-  /* Popover */
-  let popEl = null;
-  function showPopover(id, color, cx, cy){
-    const wrap = $("#ds-svg-wrap"); if (!wrap) return;
-    if (popEl) { popEl.remove(); popEl = null; }
-
-    if (id==="root") return;
-
-    const mod = MODS.find(m=>m.id===id);
-    const subj = $("#ds-subject").value || "<ID>";
-    const task = $("#ds-task").value || "<task>";
-
-    popEl = document.createElement("div");
-    popEl.className = "ds-pop";
-    popEl.style.borderColor = lighten(color, 0.65);
+  /* --- Popover positioning (never hides other nodes) --- */
+  function showPopover(mod, cx, cy){
+    const wrap = $("#ds-svg-wrap");
+    if (pop) pop.remove();
+    pop = document.createElement("div");
+    pop.className = "ds-pop";
+    pop.dataset.arrow = (mod.row===0 ? "down" : "up"); // arrow direction
 
     const header = document.createElement("div");
     header.className = "ds-pop-header";
-    header.style.background = color;
-    header.style.borderBottom = `1px solid ${lighten(color, 0.65)}`;
     header.textContent = mod.title;
-    const rate = document.createElement("span");
-    rate.className = "ds-rate"; rate.textContent = mod.rate || "";
+    const rate = document.createElement("span"); rate.className = "ds-rate"; rate.textContent = mod.rate || "";
     header.appendChild(rate);
 
-    const body = document.createElement("div");
-    body.className = "ds-pop-body";
-    const desc = document.createElement("div");
-    desc.className = "ds-desc"; desc.textContent = mod.desc || "";
+    const body = document.createElement("div"); body.className="ds-pop-body";
+    const desc = document.createElement("div"); desc.className="ds-desc"; desc.textContent = mod.desc || "";
     body.appendChild(desc);
 
+    const subj = $("#ds-subject").value || "<ID>";
+    const task = $("#ds-task").value || "<task>";
     mod.paths.forEach(p=>{
       const resolved = resolvePath(p, subj, task);
       const row = document.createElement("div"); row.className="ds-path-row";
-      const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
+      const code = document.createElement("code"); code.className="ds-path"; code.textContent=resolved;
       const btn = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
       btn.onclick = ()=>copyText(resolved, btn);
       row.appendChild(code); row.appendChild(btn); body.appendChild(row);
     });
 
-    popEl.appendChild(header); popEl.appendChild(body);
-    wrap.appendChild(popEl);
+    pop.appendChild(header); pop.appendChild(body);
+    wrap.appendChild(pop);
 
-    // Position under the clicked node (convert SVG coords -> pixels)
-    positionPopoverUnderNode(popEl, nodesCache[id].g);
-    window.addEventListener("resize", onResizeRelayout);
-    wrap.addEventListener("scroll", onResizeRelayout, { passive:true });
-
-    function onResizeRelayout(){ if(popEl) positionPopoverUnderNode(popEl, nodesCache[id].g); }
+    positionPopover(pop, nodes[mod.id]);
+    window.addEventListener("resize", ()=>positionPopover(pop, nodes[mod.id]));
+    wrap.addEventListener("scroll", ()=>positionPopover(pop, nodes[mod.id]), { passive:true });
   }
 
-  function positionPopoverUnderNode(pop, g){
+  function positionPopover(pop, node){
     const wrap = $("#ds-svg-wrap");
-    const nodeBox = g.getBoundingClientRect();
-    const wrapBox = wrap.getBoundingClientRect();
+    const nbox = node.g.getBoundingClientRect();
+    const wbox = wrap.getBoundingClientRect();
 
-    const desiredLeft = nodeBox.left - wrapBox.left + nodeBox.width/2 - pop.offsetWidth/2;
-    const desiredTop  = nodeBox.bottom - wrapBox.top + 12;
+    const popW = pop.offsetWidth;
+    const gap = 14;
 
-    const minLeft = 8;
-    const maxLeft = wrap.clientWidth - pop.offsetWidth - 8;
-    const left = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
-    const top  = Math.max(8, desiredTop);
+    // Preferred y: between rows for top row; below bottom row for bottom row
+    let top;
+    if (node.row === 0){
+      // place midway between top & bottom rows
+      top = nbox.bottom - wbox.top + gap;
+      pop.dataset.arrow = "down";
+    } else {
+      // place below the bottom row (so it never hides that row)
+      top = nbox.bottom - wbox.top + gap + 80; // push it farther down
+      pop.dataset.arrow = "down";
+    }
+
+    // Preferred x: center under node, clamped to container
+    let left = nbox.left - wbox.left + (nbox.width/2) - (popW/2);
+    left = Math.max(12, Math.min(wrap.clientWidth - popW - 12, left));
 
     pop.style.left = `${left}px`;
     pop.style.top  = `${top}px`;
-    pop.style.setProperty("border-color", nodesCache[g.dataset.id].color);
   }
 
-  /* Controls + init */
+  /* --- Controls + init --- */
   document.addEventListener("DOMContentLoaded", ()=>{
     const subjSel = $("#ds-subject");
     const taskSel = $("#ds-task");
-    SUBJECT_IDS.forEach(s => {
-      const o=document.createElement("option"); o.value=s; o.textContent=s; subjSel.appendChild(o);
-    });
+    SUBJECT_IDS.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; subjSel.appendChild(o); });
     subjSel.value = SUBJECT_IDS.includes("1847") ? "1847" : SUBJECT_IDS[0];
 
-    DS_TASKS.forEach(t=>{
-      const o=document.createElement("option"); o.value=t; o.textContent=t; taskSel.appendChild(o);
-    });
+    DS_TASKS.forEach(t=>{ const o=document.createElement("option"); o.value=t; o.textContent=t; taskSel.appendChild(o); });
     taskSel.value = "bolting";
 
-    subjSel.addEventListener("change", ()=>{ if(popEl) showPopover(activeId, nodesCache[activeId].color, 0,0); });
-    taskSel.addEventListener("change", ()=>{ if(popEl) showPopover(activeId, nodesCache[activeId].color, 0,0); });
+    subjSel.addEventListener("change", ()=>{ if(pop){ const active = Object.keys(nodes).find(id=>nodes[id].g.classList.contains("active")); if(active){ showPopover(MODS.find(m=>m.id===active), nodes[active].cx, nodes[active].cy); } }});
+    taskSel.addEventListener("change", ()=>{ if(pop){ const active = Object.keys(nodes).find(id=>nodes[id].g.classList.contains("active")); if(active){ showPopover(MODS.find(m=>m.id===active), nodes[active].cx, nodes[active].cy); } }});
 
     buildSVG();
-    // Open default popover
-    const def = MODS[0];
-    showPopover(def.id, COLORS[def.id], nodesCache[def.id].cx, nodesCache[def.id].cy);
+
+    // Open first modality by default
+    const first = MODS[0];
+    activate(first.id);
+    showPopover(first, nodes[first.id].cx, nodes[first.id].cy);
   });
 })();

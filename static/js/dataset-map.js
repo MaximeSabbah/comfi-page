@@ -54,8 +54,8 @@
     { id:"metadata",   title:"metadata",   col:"right-center", row:1,
       info:{ rate:"", desc:"Per-participant descriptors and scaled URDF.",
         groups:[{id:"files", title:"Files", paths:[
-          "COMFI/<ID>/metadata/<ID>.yaml",
-          "COMFI/<ID>/metadata/<ID>_scaled.urdf"
+          "COMFI/metadata/<ID>/<ID>.yaml",
+          "COMFI/metadata/<ID>/<ID>_scaled.urdf"
         ]}] } },
 
     { id:"forces",     title:"forces",     col:"left-closer",  row:2,

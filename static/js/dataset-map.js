@@ -31,7 +31,7 @@
           "COMFI/<ID>/images/*.png"
         ]}] } },
 
-    { id:"mocap",      title:"mocap",      col:"left-center",  row:1,
+    { id:"mocap",      title:"mocap",      col:"left-center",  row:2,
       info:{ rate:"raw 100 Hz; aligned 40 Hz",
         desc:"Optical motion capture: 3D marker positions, 3D estimated marker positions, joint center positions & joint angles.",
         groups:[
@@ -51,14 +51,14 @@
           ]}
         ] } },
 
-    { id:"metadata",   title:"metadata",   col:"right-center", row:1,
+    { id:"metadata",   title:"metadata",   col:"right-center", row:2,
       info:{ rate:"", desc:"Per-participant descriptors and scaled URDF.",
         groups:[{id:"files", title:"Files", paths:[
           "COMFI/metadata/<ID>/<ID>.yaml",
           "COMFI/metadata/<ID>/<ID>_scaled.urdf"
         ]}] } },
 
-    { id:"forces",     title:"forces",     col:"left-closer",  row:2,
+    { id:"forces",     title:"forces",     col:"left-closer",  row:1,
       info:{ rate:"Raw 1000 Hz; aligned 40 Hz", desc:"6D ground reaction forces and moments coming from laboratory grade force plates.",
         groups:[
           {id:"raw", title:"Raw", note:"1000 Hz", paths:[
@@ -69,7 +69,7 @@
           ]}
         ] } },
 
-    { id:"robot",      title:"robot",      col:"right-closer", row:2,
+    { id:"robot",      title:"robot",      col:"right-closer", row:1,
       info:{ rate:"Raw ~200 Hz; aligned 40 Hz",
         desc:"Robot telemetry for the collaborative sanding/welding tasks (raw ROS bags and aligned with cams CSV).",
         groups:[

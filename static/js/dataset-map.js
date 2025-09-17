@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VERSION = "3.0";
+  const VERSION = "3.2";
   console.log(`✅ dataset-map.js v${VERSION}`);
 
   /* ---------- Data ---------- */
@@ -12,10 +12,10 @@
     "welding","welding_sat"
   ];
 
-  // “Catalog” of modalities. Placement is column+row so we can keep it aesthetic.
-  // col: "left" | "right" ; row: 0 (top) | 1 (middle) | 2 (bottom)
+  // Columns: left, left-closer, left-center, right-center, right-closer, right
+  // Rows: 0 (top), 1 (middle), 2 (bottom)
   const CATALOG = [
-    { id:"videos",     title:"Videos",     col:"left",  row:0,
+    { id:"videos",     title:"Videos",     col:"left",         row:0,
       info:{ rate:"≈ 40 Hz per camera", desc:"RGB videos from multiple synchronized viewpoints.",
         groups:[{id:"files", title:"Files", paths:[
           "COMFI/<ID>/<task>/camera_0.mp4",
@@ -24,7 +24,14 @@
           "COMFI/<ID>/<task>/camera_6.mp4"
         ]}] } },
 
-    { id:"mocap",      title:"Mocap",      col:"left",  row:1,
+    { id:"cam_params", title:"Cam Params", col:"right",        row:0,
+      info:{ rate:"", desc:"Per-subject camera intrinsics/extrinsics and calibration images.",
+        groups:[{id:"files", title:"Files", paths:[
+          "COMFI/<ID>/cam_params.yaml",
+          "COMFI/<ID>/images/*.png"
+        ]}] } },
+
+    { id:"mocap",      title:"Mocap",      col:"left-closer",  row:1,
       info:{ rate:"C3D 100 Hz; aligned CSV 40 Hz",
         desc:"Optical motion capture: markers, model markers, joint centers & angles.",
         groups:[
@@ -43,9 +50,15 @@
           ]}
         ] } },
 
-    { id:"forces",     title:"Forces",     col:"left",  row:2,
-      info:{ rate:"Raw 1000 Hz → aligned 40 Hz",
-        desc:"Force signals only (no IMU).",
+    { id:"metadata",   title:"Metadata",   col:"right-closer", row:1,
+      info:{ rate:"", desc:"Per-subject descriptors and scaled URDF.",
+        groups:[{id:"files", title:"Files", paths:[
+          "COMFI/<ID>/metadata/<ID>.yaml",
+          "COMFI/<ID>/metadata/<ID>_scaled.urdf"
+        ]}] } },
+
+    { id:"forces",     title:"Forces",     col:"left-center",  row:2,
+      info:{ rate:"Raw 1000 Hz → aligned 40 Hz", desc:"Force signals only (no IMU).",
         groups:[
           {id:"raw", title:"Raw", note:"1000 Hz", paths:[
             "COMFI/<ID>/<task>/raw/{task}_devices.csv"
@@ -55,21 +68,7 @@
           ]}
         ] } },
 
-    { id:"cam_params", title:"Cam Params", col:"right", row:0,
-      info:{ rate:"", desc:"Per-subject camera intrinsics/extrinsics and calibration images.",
-        groups:[{id:"files", title:"Files", paths:[
-          "COMFI/<ID>/cam_params.yaml",
-          "COMFI/<ID>/images/*.png"
-        ]}] } },
-
-    { id:"metadata",   title:"Metadata",   col:"right", row:1,
-      info:{ rate:"", desc:"Per-subject descriptors and scaled URDF.",
-        groups:[{id:"files", title:"Files", paths:[
-          "COMFI/<ID>/metadata/<ID>.yaml",
-          "COMFI/<ID>/metadata/<ID>_scaled.urdf"
-        ]}] } },
-
-    { id:"robot",      title:"Robot",      col:"right", row:2,
+    { id:"robot",      title:"Robot",      col:"right-center", row:2,
       info:{ rate:"Raw ~200 Hz → aligned 40 Hz",
         desc:"Robot topics for sanding/welding tasks (ROS bag + aligned CSV).",
         groups:[
@@ -93,24 +92,44 @@
     finally { setTimeout(()=>btn.textContent="Copy", 1100); }
   };
 
-  /* ---------- Layout knobs (easy to tweak) ---------- */
+  /* ---------- Layout knobs ---------- */
   const NODE_W = 180, NODE_H = 56;
   const ROOT_Y = 100;
-  const ROW_GAP = 160;               // vertical gap between rows
-  const COL_X_PAD = 220;             // horizontal distance from edges
-  const CANVAS_MIN_H = 720;          // tall canvas to breathe
-  const FAN_STEP = 26;               // spacing between root fan-out starts (per side)
+  const ROW_GAP = 150;          // vertical distance between rows
+  const CANVAS_MIN_H = 720;
+  const EDGE_START_PAD = 2;     // how close arrow starts are to COMFI corners
+  const CENTER_START_PAD = 18;  // min distance from COMFI center for inner starts
+  const SIDE_PULL = 140;        // horizontal pull to the side before going down
+  const ROW_PULLS = [60, 100, 140]; // vertical easing per row
+
+  // Column X coordinates (relative to canvas width)
+  // Nicely fanned around the center, “circular” feel.
+  function columnX(W, col){
+    const cx = W/2;
+    const far   = 360;   // distance from center for 'left'/'right'
+    const closer= 260;   // for 'left-closer'/'right-closer'
+    const center= 200;   // for 'left-center'/'right-center'
+    switch(col){
+      case "left":         return cx - far;
+      case "left-closer":  return cx - closer;
+      case "left-center":  return cx - center;
+      case "right-center": return cx + center;
+      case "right-closer": return cx + closer;
+      case "right":        return cx + far;
+      default:             return cx;
+    }
+  }
 
   /* ---------- State ---------- */
   let svg, nodes={}, pop=null, activeId=null, hintEl=null;
 
   /* ---------- Build diagram ---------- */
-  function buildSVG() {
+  function buildSVG(){
     nodes = {};
     const wrap = $("#ds-svg-wrap"); if (!wrap) return;
     wrap.innerHTML = "";
 
-    // Hint (start)
+    // Hint
     hintEl = document.createElement("div");
     hintEl.className = "ds-hint";
     hintEl.textContent = "Tip: click a block to see paths";
@@ -128,11 +147,7 @@
     const rootX = W/2;
     addNode({id:"root", title:"COMFI"}, rootX, ROOT_Y, true);
 
-    const topY    = ROOT_Y + ROW_GAP;
-    const middleY = ROOT_Y + ROW_GAP*2;
-    const bottomY = ROOT_Y + ROW_GAP*3;
-
-    // Which modalities to show depends on the task
+    // Visible modalities depend on task
     const task = $("#ds-task").value;
     const showRobot  = (task === "robot_sanding" || task === "robot_welding");
     const hideForces = (task === "overhead" || task === "walk" || task === "walk_front");
@@ -142,27 +157,47 @@
       (m.id !== "forces" || !hideForces)
     );
 
-    // Place nodes evenly by column & row
-    const leftX  = COL_X_PAD;
-    const rightX = W - COL_X_PAD;
-
-    const rowY = [topY, middleY, bottomY];
-    mods.forEach(m => {
-      const cx = (m.col === "left") ? leftX : rightX;
-      const cy = rowY[m.row];
-      addNode(m, cx, cy, false);
+    // Place nodes
+    mods.forEach(m=>{
+      const y = ROOT_Y + ROW_GAP * (m.row + 1);
+      const x = columnX(W, m.col);
+      addNode(m, x, y, false);
     });
 
-    // Fan-out connectors from COMFI: handle left and right sides independently
-    fanOutConnectors(rootX, ROOT_Y + NODE_H/2, mods.filter(m=>m.col==="left").map(m=>nodes[m.id]), "left");
-    fanOutConnectors(rootX, ROOT_Y + NODE_H/2, mods.filter(m=>m.col==="right").map(m=>nodes[m.id]), "right");
+    // Fan-out starts along COMFI bottom: left group from left corner → center; right group from right corner → center
+    const leftGroup  = mods.filter(m => m.col.startsWith("left")).sort((a,b)=>a.row - b.row);
+    const rightGroup = mods.filter(m => m.col.startsWith("right")).sort((a,b)=>a.row - b.row);
+
+    const leftStarts  = startXsLeft (rootX, leftGroup.length);
+    const rightStarts = startXsRight(rootX, rightGroup.length);
+
+    leftGroup.forEach((m, i)  => addCurveSide(leftStarts[i],  ROOT_Y + NODE_H/2, nodes[m.id], "left"));
+    rightGroup.forEach((m, i) => addCurveSide(rightStarts[i], ROOT_Y + NODE_H/2, nodes[m.id], "right"));
 
     wrap.appendChild(svg);
   }
 
+  // Start points along COMFI bottom edge (left side → from corner toward center)
+  function startXsLeft(rootX, count){
+    const leftEdge   = rootX - NODE_W/2 + EDGE_START_PAD;
+    const centerEdge = rootX - CENTER_START_PAD;
+    if (count <= 1) return [ (leftEdge + centerEdge)/2 ];
+    const step = (centerEdge - leftEdge) / (count - 1);
+    return Array.from({length:count}, (_,i)=> leftEdge + i*step);
+  }
+  // Right side → from right corner toward center
+  function startXsRight(rootX, count){
+    const rightEdge  = rootX + NODE_W/2 - EDGE_START_PAD;
+    const centerEdge = rootX + CENTER_START_PAD;
+    if (count <= 1) return [ (rightEdge + centerEdge)/2 ];
+    const step = (rightEdge - centerEdge) / (count - 1);
+    return Array.from({length:count}, (_,i)=> rightEdge - i*step);
+  }
+
   function addNode(m, cx, cy, isRoot){
     const g = document.createElementNS(svg.namespaceURI, "g");
-    g.classList.add("ds-node"); g.dataset.id = m.id;
+    g.classList.add("ds-node");
+    g.dataset.id = m.id;
 
     const rect = document.createElementNS(svg.namespaceURI, "rect");
     rect.setAttribute("x", cx - NODE_W/2);
@@ -173,56 +208,36 @@
 
     const txt = document.createElementNS(svg.namespaceURI, "text");
     txt.setAttribute("x", cx); txt.setAttribute("y", cy + 5);
-    txt.setAttribute("text-anchor","middle");
+    txt.setAttribute("text-anchor", "middle");
     txt.textContent = m.title || "COMFI";
     g.appendChild(txt);
 
     svg.appendChild(g);
 
-    if (isRoot) {
-      g.addEventListener("click", clearActive);                 // click COMFI = overview
-    } else {
-      g.addEventListener("click", () => toggleMod(m));          // toggle popover
-    }
+    if (isRoot) g.addEventListener("click", clearActive);
+    else        g.addEventListener("click", () => toggleMod(m));
 
     nodes[m.id] = { g, cx, cy, col:m.col, row:m.row, info:m.info };
   }
 
-  // Route side curves so they never cross each other or run through boxes
-  function fanOutConnectors(rootX, rootY, children, side){
-    if (!children.length) return;
-    // Order by row top→bottom to keep lines in their own vertical “lanes”
-    children.sort((a,b)=>a.row - b.row);
+  // Side curve that first pulls outward horizontally, then down to the child top
+  function addCurveSide(sx, sy, child, side){
+    const ex = child.cx;
+    const ey = child.cy - NODE_H/2;
 
-    // Fan-out start points from COMFI center towards each side
-    const starts = children.map((_,i) =>
-      side === "left" ? (rootX - 2 - i*FAN_STEP) : (rootX + 2 + i*FAN_STEP)
-    );
+    const c1x = side === "left" ? sx - SIDE_PULL : sx + SIDE_PULL;
+    const c1y = sy + 28;
 
-    children.forEach((ch, i) => {
-      const sx = starts[i], sy = rootY;
-      const ex = ch.cx,    ey = ch.cy - NODE_H/2;
-      addSideCurve(sx, sy, ex, ey, side, ch.row);
-    });
-  }
-
-  function addSideCurve(x1,y1,x2,y2,side,row){
-    // Pull the curve outward to the side first, then down to the child top.
-    const sideBend = 140;               // horizontal pull
-    const vertBend = [60, 100, 140][row] || 100;  // row-specific vertical easing
-
-    const c1x = side === "left" ? x1 - sideBend : x1 + sideBend;
-    const c1y = y1 + 28;
-    const c2x = side === "left" ? x2 + 60 : x2 - 60;
-    const c2y = y2 - Math.min(70, vertBend);
+    const c2x = side === "left" ? ex + 60 : ex - 60;
+    const c2y = ey - Math.min(70, ROW_PULLS[child.row] || 90);
 
     const p = document.createElementNS(svg.namespaceURI, "path");
-    p.setAttribute("d", `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`);
-    p.setAttribute("class","ds-connector");
+    p.setAttribute("d", `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`);
+    p.setAttribute("class", "ds-connector");
     svg.appendChild(p);
   }
 
-  /* ---------- Popover ---------- */
+  /* ---------- Popover (toggle, compact Raw|Aligned switch) ---------- */
   function toggleMod(mod){
     if (activeId === mod.id) { clearActive(); return; }
     activeId = mod.id;
@@ -230,6 +245,7 @@
     Object.values(nodes).forEach(n => n.g.classList.toggle("active", n.g.dataset.id===activeId));
     showPopover(mod, nodes[mod.id]);
   }
+
   function clearActive(){
     activeId = null;
     if (pop) { pop.remove(); pop = null; }
@@ -248,76 +264,72 @@
     header.className = "ds-pop-header";
     header.textContent = mod.title;
     if (node.info?.rate){
-      const rate = document.createElement("span"); rate.className="ds-rate"; rate.textContent = node.info.rate;
+      const rate = document.createElement("span");
+      rate.className = "ds-rate";
+      rate.textContent = node.info.rate;
       header.appendChild(rate);
     }
     pop.appendChild(header);
 
     // Body
-    const body = document.createElement("div"); body.className="ds-pop-body";
+    const body = document.createElement("div"); body.className = "ds-pop-body";
     if (node.info?.desc){
-      const desc = document.createElement("div"); desc.className="ds-desc"; desc.textContent = node.info.desc;
+      const desc = document.createElement("div");
+      desc.className="ds-desc";
+      desc.textContent = node.info.desc;
       body.appendChild(desc);
     }
 
     const subj = $("#ds-subject").value || "<ID>";
     const task = $("#ds-task").value || "<task>";
-
     const groups = node.info?.groups || [];
 
-    // If there are raw/aligned groups, show a tiny segmented switch (only one list at a time)
-    const raw = groups.find(g=>g.id==="raw");
+    const raw     = groups.find(g=>g.id==="raw");
     const aligned = groups.find(g=>g.id==="aligned");
-    const filesOnly = groups.length===1 && groups[0].id==="files";
-
+    const files   = groups.find(g=>g.id==="files");
     let currentTab = raw ? "raw" : (aligned ? "aligned" : "files");
 
-    if (!filesOnly && (raw || aligned)){
+    // Segmented switch if Raw/Aligned both exist
+    if (raw && aligned){
       const seg = document.createElement("div"); seg.className="ds-seg";
-      const makeBtn = (id,label) => {
-        const b = document.createElement("button");
-        b.textContent = label; if (currentTab===id) b.classList.add("is-active");
-        b.onclick = ()=>{ currentTab=id; [...seg.children].forEach(x=>x.classList.remove("is-active")); b.classList.add("is-active"); renderList(); };
-        return b;
-      };
-      if (raw) seg.appendChild(makeBtn("raw","Raw"));
-      if (aligned) seg.appendChild(makeBtn("aligned","Aligned"));
+      const mk = (id,label)=>{ const b=document.createElement("button"); b.textContent=label; if(currentTab===id) b.classList.add("is-active"); b.onclick=()=>{currentTab=id; [...seg.children].forEach(x=>x.classList.remove("is-active")); b.classList.add("is-active"); render();}; return b; };
+      seg.appendChild(mk("raw","Raw"));
+      seg.appendChild(mk("aligned","Aligned"));
       body.appendChild(seg);
     }
 
-    const listBox = document.createElement("div"); body.appendChild(listBox);
+    const list = document.createElement("div"); body.appendChild(list);
 
-    function renderList(){
-      listBox.innerHTML = "";
-      const toShow = filesOnly ? groups : groups.filter(g=>g.id===currentTab);
-      toShow.forEach(gr => {
-        if (gr.title){
+    function render(){
+      list.innerHTML = "";
+      const show = files ? [files] : (currentTab==="raw" ? [raw] : [aligned]);
+      show.forEach(gr=>{
+        if (gr?.title){
           const h=document.createElement("div"); h.className="ds-subhead"; h.textContent=gr.title;
           if (gr.note){ const n=document.createElement("span"); n.className="ds-subnote"; n.textContent=`(${gr.note})`; h.appendChild(n); }
-          listBox.appendChild(h);
+          list.appendChild(h);
         }
-        (gr.paths||[]).forEach(pth => {
+        (gr?.paths||[]).forEach(pth=>{
           const resolved = resolvePath(pth, subj, task);
           const row = document.createElement("div"); row.className="ds-path-row";
           const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
           const btn = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
           btn.onclick = ()=>copyText(resolved, btn);
-          row.appendChild(code); row.appendChild(btn); listBox.appendChild(row);
+          row.appendChild(code); row.appendChild(btn); list.appendChild(row);
         });
       });
     }
-    renderList();
+    render();
 
-    pop.appendChild(body);
-    wrap.appendChild(pop);
-
+    pop.appendChild(body); wrap.appendChild(pop);
     positionPopover(pop, node);
+
     window.addEventListener("resize", relayout, { passive:true });
     wrap.addEventListener("scroll", relayout, { passive:true });
     function relayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
   }
 
-  // Top row: open below; middle/bottom rows: open above (so they don’t cover lower nodes)
+  // Top row → open below; middle/bottom → open above
   function positionPopover(pop, node){
     const wrap = $("#ds-svg-wrap");
     const nbox = node.g.getBoundingClientRect();
@@ -328,10 +340,10 @@
     left = Math.max(12, Math.min(wrap.clientWidth - pop.offsetWidth - 12, left));
 
     let top;
-    if (node.row === 0){                                       // top → below
+    if (node.row === 0){          // below top row
       pop.dataset.arrow = "down";
       top = nbox.bottom - wbox.top + gap;
-    } else {                                                   // middle/bottom → above
+    } else {                      // above other rows
       pop.dataset.arrow = "up";
       top = nbox.top - wbox.top - pop.offsetHeight - gap;
     }
@@ -349,9 +361,9 @@
     DS_TASKS.forEach(t=>{ const o=document.createElement("option"); o.value=t; o.textContent=t; taskSel.appendChild(o); });
     taskSel.value = "bolting";
 
-    subjSel.addEventListener("change", ()=>{ if (activeId && pop) showPopover(nodes[activeId], nodes[activeId]); });
-    taskSel.addEventListener("change", ()=>{ clearActive(); buildSVG(); });  // rebuild to show/hide Forces/Robot
+    subjSel.addEventListener("change", ()=>{ if (activeId && pop) showPopover(CATALOG.find(m=>m.id===activeId), nodes[activeId]); });
+    taskSel.addEventListener("change", ()=>{ clearActive(); buildSVG(); }); // rebuild for conditional nodes
 
-    buildSVG();   // start with full overview; no popover
+    buildSVG(); // full overview (no popover)
   });
 })();

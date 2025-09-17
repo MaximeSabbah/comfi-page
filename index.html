@@ -116,6 +116,7 @@
   <script defer src="static/js/bulma-slider.min.js"></script>
   <script defer src="static/js/index.js"></script>
   <script defer src="static/js/tasks-gallery.js"></script>
+  <script defer src="static/js/dataset-explorer.js"></script>
 
   
   <!-- Structured Data for Academic Papers -->
@@ -413,7 +414,7 @@
         <div class="content has-text-justified">
           <!-- TODO: Replace with your paper abstract -->
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ullamcorper tellus sed ante aliquam tempus. Etiam porttitor urna feugiat nibh elementum, et tempor dolor mattis. Donec accumsan enim augue, a vulputate nisi sodales sit amet. Proin bibendum ex eget mauris cursus euismod nec et nibh. Maecenas ac gravida ante, nec cursus dui. Vivamus purus nibh, placerat ac purus eget, sagittis vestibulum metus. Sed vestibulum bibendum lectus gravida commodo. Pellentesque auctor leo vitae sagittis suscipit.
+          COMFI (human-robot Collaboration Oriented Markerless For Industry) is a multimodal dataset designed to advance markerless motion capture, ergonomics, and Human–Robot Collaboration (HRC) in realistic factory settings. COMFI contains 4.5 hours of synchronized and spatially co-registered streams acquired from 18 participants performing 24 tasks that span everyday movements (e.g., walking, sit-to-stand) and ergonomically demanding industrial actions (lifting, overhead work, bolting, sanding, welding), with the addition of two HRC scenarios in which a Franka Emika Panda is guided by the human while holding a tool. For a total of 100Go of data, it includes: calibrated multi-view RGB videos (40Hz), optical motion capture markers and joint centers positions, as well as joint angles (100 and 40Hz), 6D ground-reaction forces (1000 and 40Hz), and robot telemetry (200 and 40Hz). Camera intrinsics/extrinsics, global triggers, and software-barrier synchronization for webcams are distributed, along with participant-scaled human Universal Robot Description Files that adhere to International Society of Biomechancis conventions, enabling kinematics, dynamics, and torque estimation. Videos are anonymized while preserving facial cues useful to markerless pipelines. Accompanying code supports loading, calibration, and visualization. COMFI enables rigorous benchmarking of markerless pose estimation under occlusion and clutter, ergonomic risk assessment that fuses kinematics with forces, and predictive HRC methods that anticipate human intent. COMFI is expected to catalyze reproducible, cross-disciplinary research toward safer, more ergonomic collaboration.
           </p>
         </div>
       </div>
@@ -458,6 +459,57 @@
     </nav>
   </div>
 </section>
+
+<section id="dataset-explorer" class="section">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3">Dataset organization</h2>
+    <p class="subtitle is-6">
+      Explore folders, sampling rates, and example paths. Choose a Subject and Task to see resolved paths.
+    </p>
+
+    <!-- Controls -->
+    <div class="field is-grouped mb-4">
+      <div class="control">
+        <label class="label is-size-7 mb-1">Subject ID</label>
+        <input id="dsx-id" class="input is-small" type="text" value="1847" placeholder="e.g., 1847">
+      </div>
+      <div class="control ml-4">
+        <label class="label is-size-7 mb-1">Task</label>
+        <div class="select is-small">
+          <select id="dsx-task">
+            <option>bolting</option>
+            <option>bolting_sat</option>
+            <option>crouch</option>
+            <option>crouch_object</option>
+            <option>hitting</option>
+            <option>hitting_sat</option>
+            <option>jump</option>
+            <option>lifting</option>
+            <option>lifting_fast</option>
+            <option>lower</option>
+            <option>overhead</option>
+            <option>robot_sanding</option>
+            <option>robot_welding</option>
+            <option>sanding</option>
+            <option>sanding_sat</option>
+            <option>sit_to_stand</option>
+            <option>squat</option>
+            <option>static</option>
+            <option>upper</option>
+            <option>walk</option>
+            <option>walk_front</option>
+            <option>welding</option>
+            <option>welding_sat</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tree -->
+    <div id="dsx-tree" class="dsx-tree"></div>
+  </div>
+</section>
+
 
 
 <!-- Image carousel -->

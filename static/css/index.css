@@ -713,6 +713,20 @@ code {
   flex-shrink: 0;
 }
 
+/* Dataset explorer */
+.dsx-tree { border: 1px solid #eee; border-radius: 12px; padding: 1rem; background: #fff; }
+.dsx-node { margin-left: 0.75rem; }
+.dsx-row { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; }
+.dsx-toggle { cursor: pointer; user-select: none; font-weight: 600; }
+.dsx-kind { font-size: .7rem; padding: .05rem .35rem; border-radius: .35rem; background: #f5f5f5; color: #555; }
+.dsx-rate { font-size: .7rem; padding: .05rem .35rem; border-radius: .35rem; background: #eef3ff; color: #335; }
+.dsx-desc { color: #666; font-size: .85rem; }
+.dsx-copy { margin-left: auto; }
+.dsx-path { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; }
+.dsx-leaf { margin-left: 1.5rem; }
+.dsx-children { margin-left: 1.25rem; border-left: 1px dashed #e5e5e5; padding-left: .75rem; }
+button.dsx-btn { border: 1px solid #ddd; background: #fafafa; padding: .1rem .5rem; border-radius: .4rem; font-size: .75rem; }
+button.dsx-btn:hover { background: #f0f0f0; }
 
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {

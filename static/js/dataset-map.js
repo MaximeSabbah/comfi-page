@@ -38,10 +38,10 @@
           {id:"raw", title:"Raw", note:"100 Hz (C3D + CSV + VSK)", paths:[
             "COMFI/raw/<ID>/{ID}.vsk",
             "COMFI/raw/<ID>/<task>/{task}.c3d",
-            "COMFI/raw/<ID>/<task>/raw/joint_angles.csv",
-            "COMFI/raw/<ID>/<task>/raw/joint_center.csv",
-            "COMFI/raw/<ID>/<task>/raw/markers.csv",
-            "COMFI/raw/<ID>/<task>/raw/markers_model.csv"
+            "COMFI/raw/<ID>/<task>/joint_angles.csv",
+            "COMFI/raw/<ID>/<task>/joint_center.csv",
+            "COMFI/raw/<ID>/<task>/markers.csv",
+            "COMFI/raw/<ID>/<task>/markers_model.csv"
           ]},
           {id:"aligned", title:"Aligned", note:"Synchronized with cam 40 Hz", paths:[
             "COMFI/aligned/<ID>/<task>/joint_angles.csv",

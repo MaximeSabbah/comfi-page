@@ -720,7 +720,7 @@ code {
   border-radius:12px;
   background:#fff;
   padding:16px;
-  min-height:640px;           /* taller canvas */
+  min-height:700px;           /* tall canvas */
   overflow:visible;
 }
 
@@ -748,7 +748,7 @@ code {
 /* Popover */
 .ds-pop{
   position:absolute; z-index:4;
-  width:min(640px, calc(100% - 32px));
+  width:min(620px, calc(100% - 32px));
   max-height:360px;
   background:#fff; border:1px solid #e6eef3; border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,.12);
@@ -756,16 +756,21 @@ code {
 }
 .ds-pop-header{
   padding:.6rem .9rem; background:#457B9D; color:#fff; font-weight:800;
-  border-bottom:1px solid #3b6b84;
+  border-bottom:1px solid #3b6b84; display:flex; align-items:center; gap:.5rem;
 }
-.ds-rate{ display:inline-block; font-size:.75rem; padding:.12rem .45rem; border-radius:.5rem; background:rgba(255,255,255,.22); margin-left:.4rem; }
+.ds-rate{ font-size:.75rem; padding:.12rem .45rem; border-radius:.5rem; background:rgba(255,255,255,.22); }
 .ds-pop-body{ padding:.8rem .9rem; max-height:300px; overflow:auto; }
-.ds-desc{ margin:.25rem 0 .6rem; color:#475569; font-size:.9rem; }
+.ds-desc{ margin:.15rem 0 .6rem; color:#475569; font-size:.9rem; }
 
-.ds-subhead{ margin:.4rem 0 .25rem; font-weight:800; color:#334155; }
+/* Segmented switch */
+.ds-seg{ display:inline-flex; gap:.25rem; border:1px solid #e5e7eb; border-radius:8px; padding:2px; margin:.1rem 0 .6rem; }
+.ds-seg button{ border:0; background:transparent; padding:.25rem .6rem; border-radius:6px; font-size:.78rem; color:#334155; }
+.ds-seg button.is-active{ background:#e7eef6; color:#0f172a; font-weight:700; }
+
+.ds-subhead{ margin:.3rem 0 .25rem; font-weight:800; color:#334155; }
 .ds-subnote{ margin-left:.35rem; font-size:.75rem; color:#64748b; font-weight:600; }
 
-.ds-path-row{ display:flex; align-items:center; gap:.5rem; margin:.25rem 0 .45rem; }
+.ds-path-row{ display:flex; align-items:center; gap:.5rem; margin:.22rem 0 .38rem; }
 .ds-path{ font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.85rem; }
 button.ds-copy{ margin-left:auto; border:1px solid #ddd; background:#fafafa; padding:.15rem .5rem; border-radius:.35rem; font-size:.75rem; }
 button.ds-copy:hover{ background:#f0f0f0; }
@@ -775,15 +780,13 @@ button.ds-copy:hover{ background:#f0f0f0; }
 .ds-pop[data-arrow="down"]::after{ top:-8px; border-bottom-color:#3b6b84; }
 .ds-pop[data-arrow="up"]::after{ bottom:-8px; border-top-color:#3b6b84; }
 
-/* Hint badge */
+/* Hint */
 .ds-hint{
   position:absolute; left:50%; top:16px; transform:translateX(-50%);
   background:#fff; border:1px dashed #cdd9e5; color:#475569;
   border-radius:999px; padding:.35rem .75rem; font-size:.8rem;
   box-shadow:0 6px 16px rgba(0,0,0,.06);
 }
-
-
 
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {

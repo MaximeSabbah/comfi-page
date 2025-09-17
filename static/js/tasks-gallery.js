@@ -43,7 +43,7 @@ const TASKS = TASK_NAMES.map(name => ({
 /* ---- State ---- */
 const MODE_ALL   = "all";
 const MODE_PAGED = "paged";
-let mode = MODE_ALL;              // default: All tasks
+let mode = MODE_PAGED;              // default: Paged mode
 let itemsPerPage = 10;            // fixed 10 per page
 let currentPage = 1;
 let filtered = [...TASKS];

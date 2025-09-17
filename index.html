@@ -116,7 +116,7 @@
   <script defer src="static/js/bulma-slider.min.js"></script>
   <script defer src="static/js/index.js"></script>
   <script defer src="static/js/tasks-gallery.js"></script>
-  <script defer src="static/js/dataset-explorer.js"></script>
+  <script defer src="static/js/dataset-map.js"></script>
 
   
   <!-- Structured Data for Academic Papers -->
@@ -460,53 +460,52 @@
   </div>
 </section>
 
-<section id="dataset-explorer" class="section">
+<section id="dataset-map" class="section">
   <div class="container is-max-widescreen">
     <h2 class="title is-3">Dataset organization</h2>
-    <p class="subtitle is-6">
-      Explore folders, sampling rates, and example paths. Choose a Subject and Task to see resolved paths.
-    </p>
+    <p class="subtitle is-6">Hover or click a box to explore; pick a Subject & Task to see resolved paths.</p>
 
     <!-- Controls -->
     <div class="field is-grouped mb-4">
       <div class="control">
         <label class="label is-size-7 mb-1">Subject ID</label>
-        <input id="dsx-id" class="input is-small" type="text" value="1847" placeholder="e.g., 1847">
+        <div class="select is-small">
+          <select id="ds-subject"></select>
+        </div>
       </div>
       <div class="control ml-4">
         <label class="label is-size-7 mb-1">Task</label>
         <div class="select is-small">
-          <select id="dsx-task">
-            <option>bolting</option>
-            <option>bolting_sat</option>
-            <option>crouch</option>
-            <option>crouch_object</option>
-            <option>hitting</option>
-            <option>hitting_sat</option>
-            <option>jump</option>
-            <option>lifting</option>
-            <option>lifting_fast</option>
-            <option>lower</option>
-            <option>overhead</option>
-            <option>robot_sanding</option>
-            <option>robot_welding</option>
-            <option>sanding</option>
-            <option>sanding_sat</option>
-            <option>sit_to_stand</option>
-            <option>squat</option>
-            <option>static</option>
-            <option>upper</option>
-            <option>walk</option>
-            <option>walk_front</option>
-            <option>welding</option>
-            <option>welding_sat</option>
-          </select>
+          <select id="ds-task"></select>
         </div>
       </div>
     </div>
 
-    <!-- Tree -->
-    <div id="dsx-tree" class="dsx-tree"></div>
+    <div class="columns is-variable is-5">
+      <!-- Left: illustrative map (SVG) -->
+      <div class="column is-8">
+        <div id="ds-svg-wrap" class="ds-svg-wrap">
+          <!-- The SVG is injected by JS -->
+        </div>
+      </div>
+
+      <!-- Right: details panel -->
+      <div class="column is-4">
+        <div id="ds-details" class="ds-details card">
+          <header class="card-header">
+            <p class="card-header-title" id="ds-details-title">Select a modality</p>
+          </header>
+          <div class="card-content">
+            <p class="is-size-7 has-text-grey" id="ds-details-rate"></p>
+            <p class="mb-3" id="ds-details-desc"></p>
+            <div id="ds-details-paths"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional static image fallback below (nice for print/exports) -->
+    <figure class="image is-16by9 mt-4"><img src="static/images/comfi_organisation.png" alt="Dataset organization schematic"></figure>
   </div>
 </section>
 

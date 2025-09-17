@@ -116,7 +116,7 @@
   <script defer src="static/js/bulma-slider.min.js"></script>
   <script defer src="static/js/index.js"></script>
   <script defer src="static/js/tasks-gallery.js"></script>
-  <script defer src="static/js/dataset-map.js?v=1.2"></script>
+  <script defer src="static/js/dataset-map.js?v=2.0"></script>
 
   
   <!-- Structured Data for Academic Papers -->
@@ -465,47 +465,26 @@
     <h2 class="title is-3 has-text-centered">Dataset organization</h2>
     <p class="subtitle has-text-centered">Hover or click a box to explore; pick a Subject & Task to see resolved paths.</p>
 
-    <!-- Controls -->
+    <!-- inside #dataset-map .container -->
     <div class="field is-grouped mb-4">
       <div class="control">
         <label class="label is-size-7 mb-1">Subject ID</label>
-        <div class="select is-small">
-          <select id="ds-subject"></select>
-        </div>
+        <div class="select is-small"><select id="ds-subject"></select></div>
       </div>
       <div class="control ml-4">
         <label class="label is-size-7 mb-1">Task</label>
-        <div class="select is-small">
-          <select id="ds-task"></select>
-        </div>
+        <div class="select is-small"><select id="ds-task"></select></div>
       </div>
     </div>
 
-    <div class="columns is-variable is-5">
-      <!-- Left: illustrative map (SVG) -->
-      <div class="column is-8">
-        <div id="ds-svg-wrap" class="ds-svg-wrap">
-          <!-- The SVG is injected by JS -->
-        </div>
-      </div>
-
-      <!-- Right: details panel -->
-      <div class="column is-4">
-        <div id="ds-details" class="ds-details card">
-          <header class="card-header">
-            <p class="card-header-title" id="ds-details-title">Select a modality</p>
-          </header>
-          <div class="card-content">
-            <p class="is-size-7 has-text-grey" id="ds-details-rate"></p>
-            <p class="mb-3" id="ds-details-desc"></p>
-            <div id="ds-details-paths"></div>
-          </div>
-        </div>
+      <!-- One big interactive canvas -->
+      <div id="ds-svg-wrap" class="ds-svg-wrap">
+        <!-- SVG + popover are injected by JS -->
       </div>
     </div>
 
     <!-- Optional static image fallback below (nice for print/exports) -->
-    <figure class="image is-16by9 mt-4"><img src="static/images/comfi_organisation.png" alt="Dataset organization schematic"></figure>
+    <!-- <figure class="image is-16by9 mt-4"><img src="static/images/comfi_organisation.png" alt="Dataset organization schematic"></figure> -->
   </div>
 </section>
 

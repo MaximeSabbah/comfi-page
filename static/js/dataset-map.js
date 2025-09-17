@@ -18,17 +18,17 @@
     { id:"videos",     title:"videos",     col:"right",         row:0,
       info:{ rate:"≈ 40 Hz", desc:"RGB videos from multiple synchronized viewpoints.",
         groups:[{id:"files", title:"Files", paths:[
-          "COMFI/<ID>/<task>/camera_0.mp4",
-          "COMFI/<ID>/<task>/camera_2.mp4",
-          "COMFI/<ID>/<task>/camera_4.mp4",
-          "COMFI/<ID>/<task>/camera_6.mp4"
+          "COMFI/videos/<ID>/<task>/camera_0.mp4",
+          "COMFI/videos/<ID>/<task>/camera_2.mp4",
+          "COMFI/videos/<ID>/<task>/camera_4.mp4",
+          "COMFI/videos/<ID>/<task>/camera_6.mp4"
         ]}] } },
 
     { id:"cam_params", title:"cam params", col:"left",        row:0,
       info:{ rate:"", desc:"Per-participant camera intrinsics/extrinsics and calibration images.",
         groups:[{id:"files", title:"Files", paths:[
-          "COMFI/<ID>/*.yaml",
-          "COMFI/<ID>/images/*.png"
+          "COMFI/cam_params/<ID>/*.yaml",
+          "COMFI/cam_params/<ID>/images/*.png"
         ]}] } },
 
     { id:"mocap",      title:"mocap",      col:"left-center",  row:2,
@@ -36,18 +36,18 @@
         desc:"Optical motion capture: 3D marker positions, 3D estimated marker positions, joint center positions & joint angles.",
         groups:[
           {id:"raw", title:"Raw", note:"100 Hz (C3D + CSV + VSK)", paths:[
-            "COMFI/raw/<ID>/{ID}.vsk",
-            "COMFI/raw/<ID>/<task>/{task}.c3d",
-            "COMFI/raw/<ID>/<task>/joint_angles.csv",
-            "COMFI/raw/<ID>/<task>/joint_center.csv",
-            "COMFI/raw/<ID>/<task>/markers.csv",
-            "COMFI/raw/<ID>/<task>/markers_model.csv"
+            "COMFI/mocap/raw/<ID>/{ID}.vsk",
+            "COMFI/mocap/raw/<ID>/<task>/{task}.c3d",
+            "COMFI/mocap/raw/<ID>/<task>/joint_angles.csv",
+            "COMFI/mocap/raw/<ID>/<task>/joint_center.csv",
+            "COMFI/mocap/raw/<ID>/<task>/markers.csv",
+            "COMFI/mocap/raw/<ID>/<task>/markers_model.csv"
           ]},
           {id:"aligned", title:"Aligned", note:"Synchronized with cam 40 Hz", paths:[
-            "COMFI/aligned/<ID>/<task>/joint_angles.csv",
-            "COMFI/aligned/<ID>/<task>/joint_center.csv",
-            "COMFI/aligned/<ID>/<task>/markers.csv",
-            "COMFI/aligned/<ID>/<task>/markers_model.csv"
+            "COMFI/mocap/aligned/<ID>/<task>/joint_angles.csv",
+            "COMFI/mocap/aligned/<ID>/<task>/joint_center.csv",
+            "COMFI/mocap/aligned/<ID>/<task>/markers.csv",
+            "COMFI/mocap/aligned/<ID>/<task>/markers_model.csv"
           ]}
         ] } },
 
@@ -62,10 +62,10 @@
       info:{ rate:"Raw 1000 Hz; aligned 40 Hz", desc:"6D ground reaction forces and moments coming from laboratory grade force plates.",
         groups:[
           {id:"raw", title:"Raw", note:"1000 Hz", paths:[
-            "COMFI/raw/<ID>/<task>/{task}_devices.csv"
+            "COMFI/forces/raw/<ID>/<task>/{task}_devices.csv"
           ]},
           {id:"aligned", title:"Aligned", note:"40 Hz", paths:[
-            "COMFI/aligned/<ID>/<task>/{task}_devices.csv"
+            "COMFI/forces/aligned/<ID>/<task>/{task}_devices.csv"
           ]}
         ] } },
 
@@ -74,12 +74,12 @@
         desc:"Robot telemetry for the collaborative sanding/welding tasks (raw ROS bags and aligned with cams CSV).",
         groups:[
           {id:"raw", title:"Raw", note:"200 Hz ROS bag", paths:[
-            "COMFI/raw/<ID>/robot_sanding.bag",
-            "COMFI/raw/<ID>/robot_welding.bag"
+            "COMFI/robot/raw/<ID>/robot_sanding.bag",
+            "COMFI/robot/raw/<ID>/robot_welding.bag"
           ]},
           {id:"aligned", title:"Aligned", note:"40 Hz CSV", paths:[
-            "COMFI/aligned/<ID>/robot_sanding.csv",
-            "COMFI/aligned/<ID>/robot_welding.csv"
+            "COMFI/robot/aligned/<ID>/robot_sanding.csv",
+            "COMFI/robot/aligned/<ID>/robot_welding.csv"
           ]}
         ] } }
   ];

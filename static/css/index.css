@@ -721,14 +721,14 @@ code {
   background:#fff;
   padding:16px;
   min-height:560px;
-  overflow:visible; /* allow popover to breathe */
+  overflow:visible;
 }
 
-/* Nodes + connectors */
+/* Nodes + connectors (brand colors) */
 .ds-node{ cursor:pointer; }
 .ds-node rect{
-  fill:#A8DADC;              /* your fill */
-  stroke:#457B9D;            /* your contour */
+  fill:#A8DADC;              /* fill */
+  stroke:#457B9D;            /* contour */
   stroke-width:1.8;
   rx:12; ry:12;
   transition:transform .12s, filter .12s, stroke-width .12s;
@@ -736,16 +736,10 @@ code {
 }
 .ds-node:hover rect{ transform:translateY(-1px); }
 .ds-node.active rect{ stroke-width:2.2; }
-
-.ds-node text{
-  font-size:14px;
-  fill:#0f172a;
-  font-weight:700;
-  pointer-events:none;
-}
+.ds-node text{ font-size:14px; fill:#0f172a; font-weight:700; pointer-events:none; }
 
 .ds-connector{
-  stroke:#457B9D;            /* your arrows */
+  stroke:#457B9D;            /* arrows */
   stroke-width:2;
   fill:none;
   opacity:.55;
@@ -753,46 +747,37 @@ code {
 
 /* Popover */
 .ds-pop{
-  position:absolute;
-  z-index:4;
+  position:absolute; z-index:4;
   width:min(620px, calc(100% - 32px));
   max-height:360px;
-  background:#fff;
-  border:1px solid #e6eef3;
-  border-radius:12px;
+  background:#fff; border:1px solid #e6eef3; border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,.12);
   overflow:hidden;
 }
 .ds-pop-header{
-  padding:.6rem .9rem;
-  background:#457B9D;
-  color:#fff;
-  font-weight:800;
+  padding:.6rem .9rem; background:#457B9D; color:#fff; font-weight:800;
   border-bottom:1px solid #3b6b84;
 }
-.ds-rate{
-  display:inline-block;
-  font-size:.75rem;
-  padding:.12rem .45rem;
-  border-radius:.5rem;
-  background:rgba(255,255,255,.22);
-  margin-left:.4rem;
-}
+.ds-rate{ display:inline-block; font-size:.75rem; padding:.12rem .45rem; border-radius:.5rem; background:rgba(255,255,255,.22); margin-left:.4rem; }
 .ds-pop-body{ padding:.8rem .9rem; max-height:300px; overflow:auto; }
 .ds-desc{ margin:.25rem 0 .6rem; color:#475569; font-size:.9rem; }
-
 .ds-path-row{ display:flex; align-items:center; gap:.5rem; margin:.25rem 0 .45rem; }
 .ds-path{ font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.85rem; }
 button.ds-copy{ margin-left:auto; border:1px solid #ddd; background:#fafafa; padding:.15rem .5rem; border-radius:.35rem; font-size:.75rem; }
 button.ds-copy:hover{ background:#f0f0f0; }
 
-/* Little arrow under/over the popover; color inherited from header border */
-.ds-pop::after{
-  content:""; position:absolute; left:50%; transform:translateX(-50%);
-  border:8px solid transparent;
-}
+/* Popover arrow */
+.ds-pop::after{ content:""; position:absolute; left:50%; transform:translateX(-50%); border:8px solid transparent; }
 .ds-pop[data-arrow="down"]::after{ top:-8px; border-bottom-color:#3b6b84; }
 .ds-pop[data-arrow="up"]::after{ bottom:-8px; border-top-color:#3b6b84; }
+
+/* Little hint badge shown at start (hidden after first click) */
+.ds-hint{
+  position:absolute; left:50%; top:16px; transform:translateX(-50%);
+  background:#fff; border:1px dashed #cdd9e5; color:#475569;
+  border-radius:999px; padding:.35rem .75rem; font-size:.8rem;
+  box-shadow:0 6px 16px rgba(0,0,0,.06);
+}
 
 
 /* Mobile Responsive Improvements */

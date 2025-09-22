@@ -788,6 +788,8 @@ button.ds-copy:hover{ background:#f0f0f0; }
   box-shadow:0 6px 16px rgba(0,0,0,.06);
 }
 
+.ds-warning{ color:#b91c1c; font-weight:700; margin:.25rem 0 .5rem; }
+
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {
   .hero-body {

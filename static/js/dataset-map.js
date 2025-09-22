@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VERSION = "3.4";
+  const VERSION = "3.5";
   console.log(`✅ dataset-map.js v${VERSION}`);
 
   /* ---------- Data ---------- */
@@ -11,6 +11,18 @@
     "sanding","sanding_sat","sit_to_stand","squat","static","upper","walk","walk_front",
     "welding","welding_sat"
   ];
+
+  /* ---------- Per-subject extrinsics splits ---------- */
+  /* Update these arrays as you learn the exact mapping. */
+  const CALIB_SPLITS = {
+    "4162": {
+      // Tasks that use the *second* extrinsics (Calib 2)
+      calib2: ["hitting_sat"],
+      // If you leave calib1 empty, we’ll auto-fill it as “all other tasks”
+      calib1: []
+    }
+  };
+
 
   // Columns: left, left-closer, left-center, right-center, right-closer, right
   // Rows: 0 (top), 1 (middle), 2 (bottom)
@@ -270,7 +282,7 @@
     hintEl && (hintEl.style.display = "");
   }
 
-  function showPopover(mod, node){
+function showPopover(mod, node){
   const wrap = $("#ds-svg-wrap");
   if (pop) { pop.remove(); pop = null; }
   pop = document.createElement("div");
@@ -297,11 +309,10 @@
     body.appendChild(desc);
   }
 
-  const subj = $("#ds-subject").value || "<ID>";
-  const task = $("#ds-task").value || "<task>";
+  const subj  = $("#ds-subject").value || "<ID>";
+  const task  = $("#ds-task").value || "<task>";
   const groups = node.info?.groups || [];
 
-  // Helpers
   const byId = id => groups.find(g => g.id === id);
   const files   = byId("files");
   const raw     = byId("raw");
@@ -309,18 +320,13 @@
   const intr    = byId("intrinsics");
   const extr    = byId("extrinsics");
 
-  // Decide if we should show tabs:
-  // 1) raw/aligned  or  2) intrinsics/extrinsics
+  // Decide tabs: raw/aligned OR intrinsics/extrinsics
   let tabDefs = null;
-  if (raw && aligned) {
-    tabDefs = [raw, aligned];
-  } else if (intr && extr) {
-    tabDefs = [intr, extr];
-  }
+  if (raw && aligned)        tabDefs = [raw, aligned];
+  else if (intr && extr)     tabDefs = [intr, extr];
 
   let currentTab = tabDefs ? tabDefs[0].id : (files ? "files" : null);
 
-  // Segmented switch when we have a tabbed pair
   if (tabDefs){
     const seg = document.createElement("div"); seg.className = "ds-seg";
     tabDefs.forEach(td => {
@@ -343,15 +349,77 @@
   function render(){
     list.innerHTML = "";
 
+    // ---- Special case: Cam Params → Extrinsics with split calibrations ----
+    const split = CALIB_SPLITS[subj];
+    if (mod.id === "cam_params" && currentTab === "extrinsics" && extr && split){
+      // Build calib1 list: explicit or “all others”
+      const calib2Set = new Set(split.calib2 || []);
+      const calib1 = (split.calib1 && split.calib1.length)
+        ? split.calib1
+        : DS_TASKS.filter(t => !calib2Set.has(t));
+
+      // Red warning
+      const warn = document.createElement("div");
+      warn.className = "ds-warning";
+      const uses = calib2Set.has(task) ? "Calib 2" : "Calib 1";
+      warn.innerHTML = [
+        `Caution: participant <strong>${subj}</strong> has two extrinsics calibrations.`,
+        `The current task <strong>${task}</strong> uses <strong>${uses}</strong>.`,
+        `<br>Calib&nbsp;1 tasks: ${calib1.join(", ") || "—"}`,
+        `<br>Calib&nbsp;2 tasks: ${(split.calib2 || []).join(", ") || "—"}`
+      ].join(" ");
+      list.appendChild(warn);
+
+      // Helper: rewrite /extrinsics/ → /extrinsics_1/ or /extrinsics_2/
+      const mapPaths = (paths, suffix) =>
+        (paths || []).map(p => p.replace("/extrinsics/", `/extrinsics_${suffix}/`));
+
+      // Calib 1 section
+      const h1 = document.createElement("div");
+      h1.className = "ds-subhead";
+      h1.textContent = "Extrinsics – Calib 1";
+      list.appendChild(h1);
+      mapPaths(extr.paths, "1").forEach(pth => {
+        const resolved = resolvePath(
+          pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
+          subj, task
+        );
+        const row = document.createElement("div"); row.className="ds-path-row";
+        const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
+        const btn  = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
+        btn.onclick = ()=>copyText(resolved, btn);
+        row.appendChild(code); row.appendChild(btn); list.appendChild(row);
+      });
+
+      // Calib 2 section
+      const h2 = document.createElement("div");
+      h2.className = "ds-subhead";
+      h2.textContent = "Extrinsics – Calib 2";
+      list.appendChild(h2);
+      mapPaths(extr.paths, "2").forEach(pth => {
+        const resolved = resolvePath(
+          pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
+          subj, task
+        );
+        const row = document.createElement("div"); row.className="ds-path-row";
+        const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
+        const btn  = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
+        btn.onclick = ()=>copyText(resolved, btn);
+        row.appendChild(code); row.appendChild(btn); list.appendChild(row);
+      });
+
+      // Done with special rendering
+      return;
+    }
+    // ---- End special case ----
+
+    // Default rendering
     let toShow;
     if (files && !tabDefs) {
-      // only a “files” bucket
       toShow = [files];
     } else if (tabDefs) {
-      // show only the currently selected tab group
       toShow = tabDefs.filter(g => g.id === currentTab);
     } else {
-      // no tabs, no 'files' → render all groups sequentially
       toShow = groups;
     }
 
@@ -368,7 +436,6 @@
         }
         list.appendChild(h);
       }
-
       (gr.paths || []).forEach(pth=>{
         const resolved = resolvePath(
           pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
@@ -390,7 +457,7 @@
   window.addEventListener("resize", relayout, { passive:true });
   wrap.addEventListener("scroll", relayout, { passive:true });
   function relayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
- }
+  }
 
 
   // Top row → open below; middle/bottom → open above

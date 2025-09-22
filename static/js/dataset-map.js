@@ -350,36 +350,32 @@ function showPopover(mod, node){
     list.innerHTML = "";
 
     // ---- Special case: Cam Params → Extrinsics with split calibrations ----
-    const split = CALIB_SPLITS[subj];
+    const split = (typeof CALIB_SPLITS !== "undefined") ? CALIB_SPLITS[subj] : null;
     if (mod.id === "cam_params" && currentTab === "extrinsics" && extr && split){
-      // Build calib1 list: explicit or “all others”
+      // Determine which calib applies to the current task
       const calib2Set = new Set(split.calib2 || []);
-      const calib1 = (split.calib1 && split.calib1.length)
-        ? split.calib1
-        : DS_TASKS.filter(t => !calib2Set.has(t));
+      const useCalib2 = calib2Set.has(task);
+      const calibLabel = useCalib2 ? "Calib 2" : "Calib 1";
+      const suffix = useCalib2 ? "2" : "1";
 
-      // Red warning
+      // Short red warning (no long lists)
       const warn = document.createElement("div");
       warn.className = "ds-warning";
-      const uses = calib2Set.has(task) ? "Calib 2" : "Calib 1";
-      warn.innerHTML = [
-        `Caution: participant <strong>${subj}</strong> has two extrinsics calibrations.`,
-        `The current task <strong>${task}</strong> uses <strong>${uses}</strong>.`,
-        `<br>Calib&nbsp;1 tasks: ${calib1.join(", ") || "—"}`,
-        `<br>Calib&nbsp;2 tasks: ${(split.calib2 || []).join(", ") || "—"}`
-      ].join(" ");
+      warn.innerHTML = `Caution: participant <strong>${subj}</strong> has two extrinsics calibrations. `
+        + `The current task <strong>${task}</strong> uses <strong>${calibLabel}</strong>.`;
       list.appendChild(warn);
 
       // Helper: rewrite /extrinsics/ → /extrinsics_1/ or /extrinsics_2/
-      const mapPaths = (paths, suffix) =>
+      const mapPaths = (paths) =>
         (paths || []).map(p => p.replace("/extrinsics/", `/extrinsics_${suffix}/`));
 
-      // Calib 1 section
-      const h1 = document.createElement("div");
-      h1.className = "ds-subhead";
-      h1.textContent = "Extrinsics – Calib 1";
-      list.appendChild(h1);
-      mapPaths(extr.paths, "1").forEach(pth => {
+      // Single section for the applicable calibration
+      const h = document.createElement("div");
+      h.className = "ds-subhead";
+      h.textContent = `Extrinsics – ${calibLabel}`;
+      list.appendChild(h);
+
+      mapPaths(extr.paths).forEach(pth => {
         const resolved = resolvePath(
           pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
           subj, task
@@ -391,25 +387,7 @@ function showPopover(mod, node){
         row.appendChild(code); row.appendChild(btn); list.appendChild(row);
       });
 
-      // Calib 2 section
-      const h2 = document.createElement("div");
-      h2.className = "ds-subhead";
-      h2.textContent = "Extrinsics – Calib 2";
-      list.appendChild(h2);
-      mapPaths(extr.paths, "2").forEach(pth => {
-        const resolved = resolvePath(
-          pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
-          subj, task
-        );
-        const row = document.createElement("div"); row.className="ds-path-row";
-        const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
-        const btn  = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
-        btn.onclick = ()=>copyText(resolved, btn);
-        row.appendChild(code); row.appendChild(btn); list.appendChild(row);
-      });
-
-      // Done with special rendering
-      return;
+      return; // done with special case
     }
     // ---- End special case ----
 

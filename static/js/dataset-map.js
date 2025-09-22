@@ -26,10 +26,28 @@
 
     { id:"cam_params", title:"cam params", col:"left",        row:0,
       info:{ rate:"", desc:"Per-participant camera intrinsics/extrinsics and calibration images.",
-        groups:[{id:"files", title:"Files", paths:[
-          "COMFI/cam_params/<ID>/*.yaml",
-          "COMFI/cam_params/<ID>/images/*.png"
-        ]}] } },
+        groups:[
+          {id:"intrinsics", title:"Intrinsics", note:"YAML containing camera intrinsics (K and D) + chessboard images", paths:[
+            "COMFI/cam_params/<ID>/intrinsics/camera_0_intrinsics.yaml",
+            "COMFI/cam_params/<ID>/intrinsics/camera_2_intrinsics.yaml",
+            "COMFI/cam_params/<ID>/intrinsics/camera_4_intrinsics.yaml",
+            "COMFI/cam_params/<ID>/intrinsics/camera_6_intrinsics.yaml",
+            "COMFI/cam_params/<ID>/intrinsics/images/*.jpg"
+          ]},
+          {id:"extrinsics", title:"Extrinsics", note:"YAML containing camera extrinsics (R and T in world) + YAML containing cam to cam poses + Aruco images", paths:[
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_cam/camera_0_to_camera_2.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_cam/camera_2_to_camera_4.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_cam/camera_4_to_camera_6.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_0/camera_0_extrinsics.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_0/images/*.jpg",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_2/camera_2_extrinsics.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_2/images/*.jpg",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_4/camera_4_extrinsics.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_4/images/*.jpg",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_6/camera_6_extrinsics.yaml",
+            "COMFI/cam_params/<ID>/extrinsics/cam_to_world/camera_6/images/*.jpg"
+          ]}
+        ] } },
 
     { id:"mocap",      title:"mocap",      col:"left-center",  row:2,
       info:{ rate:"raw 100 Hz; aligned 40 Hz",

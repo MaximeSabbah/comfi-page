@@ -367,7 +367,7 @@ function showPopover(mod, node){
 
       // Helper: rewrite /extrinsics/ → /extrinsics_1/ or /extrinsics_2/
       const mapPaths = (paths) =>
-        (paths || []).map(p => p.replace("/extrinsics/", `/extrinsics/calib_${suffix}/`));
+        (paths || []).map(p => p.replace("/extrinsics/cam_to_world", `/extrinsics/cam_to_world/calib_${suffix}/`));
 
       // Single section for the applicable calibration
       const h = document.createElement("div");

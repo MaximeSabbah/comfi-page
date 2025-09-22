@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VERSION = "3.2";
+  const VERSION = "3.4";
   console.log(`✅ dataset-map.js v${VERSION}`);
 
   /* ---------- Data ---------- */

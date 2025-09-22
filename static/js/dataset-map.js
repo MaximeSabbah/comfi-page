@@ -17,9 +17,9 @@
   const CALIB_SPLITS = {
     "4162": {
       // Tasks that use the *second* extrinsics (Calib 2)
-      calib2: ["hitting_sat"],
+      calib2: ["bolting","bolting_sat","hitting","hitting_sat","overhead","robot_sanding","robot_welding","sanding","sanding_sat","welding","welding_sat"],
       // If you leave calib1 empty, we’ll auto-fill it as “all other tasks”
-      calib1: []
+      calib1: ["static","upper","lower","squat","jump","sit_to_stand","walk","walk_front","crouch","crouch_object","lifting","lifting_fast"]
     }
   };
 

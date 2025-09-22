@@ -271,80 +271,127 @@
   }
 
   function showPopover(mod, node){
-    const wrap = $("#ds-svg-wrap");
-    if (pop) { pop.remove(); pop = null; }
-    pop = document.createElement("div");
-    pop.className = "ds-pop";
+  const wrap = $("#ds-svg-wrap");
+  if (pop) { pop.remove(); pop = null; }
+  pop = document.createElement("div");
+  pop.className = "ds-pop";
 
-    // Header
-    const header = document.createElement("div");
-    header.className = "ds-pop-header";
-    header.textContent = mod.title;
-    if (node.info?.rate){
-      const rate = document.createElement("span");
-      rate.className = "ds-rate";
-      rate.textContent = node.info.rate;
-      header.appendChild(rate);
-    }
-    pop.appendChild(header);
-
-    // Body
-    const body = document.createElement("div"); body.className = "ds-pop-body";
-    if (node.info?.desc){
-      const desc = document.createElement("div");
-      desc.className="ds-desc";
-      desc.textContent = node.info.desc;
-      body.appendChild(desc);
-    }
-
-    const subj = $("#ds-subject").value || "<ID>";
-    const task = $("#ds-task").value || "<task>";
-    const groups = node.info?.groups || [];
-
-    const raw     = groups.find(g=>g.id==="raw");
-    const aligned = groups.find(g=>g.id==="aligned");
-    const files   = groups.find(g=>g.id==="files");
-    let currentTab = raw ? "raw" : (aligned ? "aligned" : "files");
-
-    // Segmented switch if Raw/Aligned both exist
-    if (raw && aligned){
-      const seg = document.createElement("div"); seg.className="ds-seg";
-      const mk = (id,label)=>{ const b=document.createElement("button"); b.textContent=label; if(currentTab===id) b.classList.add("is-active"); b.onclick=()=>{currentTab=id; [...seg.children].forEach(x=>x.classList.remove("is-active")); b.classList.add("is-active"); render();}; return b; };
-      seg.appendChild(mk("raw","Raw"));
-      seg.appendChild(mk("aligned","Aligned"));
-      body.appendChild(seg);
-    }
-
-    const list = document.createElement("div"); body.appendChild(list);
-
-    function render(){
-      list.innerHTML = "";
-      const show = files ? [files] : (currentTab==="raw" ? [raw] : [aligned]);
-      show.forEach(gr=>{
-        if (gr?.title){
-          const h=document.createElement("div"); h.className="ds-subhead"; h.textContent=gr.title;
-          if (gr.note){ const n=document.createElement("span"); n.className="ds-subnote"; n.textContent=`(${gr.note})`; h.appendChild(n); }
-          list.appendChild(h);
-        }
-        (gr?.paths||[]).forEach(pth=>{
-          const resolved = resolvePath(pth, subj, task);
-          const row = document.createElement("div"); row.className="ds-path-row";
-          const code = document.createElement("code"); code.className="ds-path"; code.textContent = resolved;
-          const btn = document.createElement("button"); btn.className="ds-copy"; btn.textContent="Copy";
-          btn.onclick = ()=>copyText(resolved, btn);
-          row.appendChild(code); row.appendChild(btn); list.appendChild(row);
-        });
-      });
-    }
-    render();
-
-    pop.appendChild(body); wrap.appendChild(pop);
-    positionPopover(pop, node);
-
-    window.addEventListener("resize", relayout, { passive:true });
-    wrap.addEventListener("scroll", relayout, { passive:true });
-    function relayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
+  // Header
+  const header = document.createElement("div");
+  header.className = "ds-pop-header";
+  header.textContent = mod.title;
+  if (node.info?.rate){
+    const rate = document.createElement("span");
+    rate.className = "ds-rate";
+    rate.textContent = node.info.rate;
+    header.appendChild(rate);
   }
+  pop.appendChild(header);
+
+  // Body
+  const body = document.createElement("div"); body.className = "ds-pop-body";
+  if (node.info?.desc){
+    const desc = document.createElement("div");
+    desc.className="ds-desc";
+    desc.textContent = node.info.desc;
+    body.appendChild(desc);
+  }
+
+  const subj = $("#ds-subject").value || "<ID>";
+  const task = $("#ds-task").value || "<task>";
+  const groups = node.info?.groups || [];
+
+  // Helpers
+  const byId = id => groups.find(g => g.id === id);
+  const files   = byId("files");
+  const raw     = byId("raw");
+  const aligned = byId("aligned");
+  const intr    = byId("intrinsics");
+  const extr    = byId("extrinsics");
+
+  // Decide if we should show tabs:
+  // 1) raw/aligned  or  2) intrinsics/extrinsics
+  let tabDefs = null;
+  if (raw && aligned) {
+    tabDefs = [raw, aligned];
+  } else if (intr && extr) {
+    tabDefs = [intr, extr];
+  }
+
+  let currentTab = tabDefs ? tabDefs[0].id : (files ? "files" : null);
+
+  // Segmented switch when we have a tabbed pair
+  if (tabDefs){
+    const seg = document.createElement("div"); seg.className = "ds-seg";
+    tabDefs.forEach(td => {
+      const b = document.createElement("button");
+      b.textContent = td.title || td.id;
+      if (currentTab === td.id) b.classList.add("is-active");
+      b.onclick = () => {
+        currentTab = td.id;
+        [...seg.children].forEach(x=>x.classList.remove("is-active"));
+        b.classList.add("is-active");
+        render();
+      };
+      seg.appendChild(b);
+    });
+    body.appendChild(seg);
+  }
+
+  const list = document.createElement("div"); body.appendChild(list);
+
+  function render(){
+    list.innerHTML = "";
+
+    let toShow;
+    if (files && !tabDefs) {
+      // only a “files” bucket
+      toShow = [files];
+    } else if (tabDefs) {
+      // show only the currently selected tab group
+      toShow = tabDefs.filter(g => g.id === currentTab);
+    } else {
+      // no tabs, no 'files' → render all groups sequentially
+      toShow = groups;
+    }
+
+    toShow.filter(Boolean).forEach(gr=>{
+      if (gr.title){
+        const h = document.createElement("div");
+        h.className = "ds-subhead";
+        h.textContent = gr.title;
+        if (gr.note){
+          const n = document.createElement("span");
+          n.className = "ds-subnote";
+          n.textContent = `(${gr.note})`;
+          h.appendChild(n);
+        }
+        list.appendChild(h);
+      }
+
+      (gr.paths || []).forEach(pth=>{
+        const resolved = resolvePath(
+          pth.replace(/\{ID\}/g, subj).replace(/\{task\}/g, task),
+          subj, task
+        );
+        const row  = document.createElement("div"); row.className = "ds-path-row";
+        const code = document.createElement("code"); code.className = "ds-path"; code.textContent = resolved;
+        const btn  = document.createElement("button"); btn.className = "ds-copy"; btn.textContent = "Copy";
+        btn.onclick = () => copyText(resolved, btn);
+        row.appendChild(code); row.appendChild(btn); list.appendChild(row);
+      });
+    });
+  }
+  render();
+
+  pop.appendChild(body); wrap.appendChild(pop);
+  positionPopover(pop, node);
+
+  window.addEventListener("resize", relayout, { passive:true });
+  wrap.addEventListener("scroll", relayout, { passive:true });
+  function relayout(){ if(pop && activeId===mod.id) positionPopover(pop, nodes[mod.id]); }
+ }
+
 
   // Top row → open below; middle/bottom → open above
   function positionPopover(pop, node){

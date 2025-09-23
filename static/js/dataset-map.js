@@ -6,10 +6,10 @@
   /* ---------- Data ---------- */
   const SUBJECT_IDS = ["1012","1118","1508","1602","1847","2112","2198","2307","3361","4162","4216","4279","4509","4612","4665","4687","4801","4827"];
   const DS_TASKS = [
-    "bolting","bolting_sat","crouch","crouch_object","hitting","hitting_sat","jump","lifting",
-    "lifting_fast","lower","overhead","robot_sanding","robot_welding",
-    "sanding","sanding_sat","sit_to_stand","squat","static","upper","walk","walk_front",
-    "welding","welding_sat"
+    "Screwing","ScrewingSat","Crouching","Picking","Hammering","HammeringSat","Jumping","Lifting",
+    "QuickLifting","Lower","SideOverhead","RobotPolishing","RobotWelding",
+    "Polishing","PolishingSat","SitToStand","Squatting","Static","Upper","CircularWalking","StraightWalking",
+    "Welding","WeldingSat"
   ];
 
   /* ---------- Per-subject extrinsics splits ---------- */
@@ -17,9 +17,9 @@
   const CALIB_SPLITS = {
     "4162": {
       // Tasks that use the *second* extrinsics (Calib 2)
-      calib2: ["bolting","bolting_sat","hitting","hitting_sat","overhead","robot_sanding","robot_welding","sanding","sanding_sat","welding","welding_sat"],
+      calib2: ["Screwing","ScrewingSat","Hammering","HammeringSat","SideOverhead","RobotPolishing","RobotWelding","Polishing","PolishingSat","Welding","WeldingSat"],
       // If you leave calib1 empty, we’ll auto-fill it as “all other tasks”
-      calib1: ["static","upper","lower","squat","jump","sit_to_stand","walk","walk_front","crouch","crouch_object","lifting","lifting_fast"]
+      calib1: ["Static","Upper","Lower","Squatting","Jumping","SitToStand","CircularWalking","StraightWalking","Crouching","Picking","Lifting","QuickLifting"]
     }
   };
 
@@ -28,12 +28,16 @@
   // Rows: 0 (top), 1 (middle), 2 (bottom)
   const CATALOG = [
     { id:"videos",     title:"videos",     col:"right",         row:0,
-      info:{ rate:"≈ 40 Hz", desc:"RGB videos from multiple synchronized viewpoints.",
+      info:{ rate:"≈ 40 Hz", desc:"RGB videos + associated timestamps.",
         groups:[{id:"files", title:"Files", paths:[
           "COMFI/videos/<ID>/<task>/camera_0.mp4",
           "COMFI/videos/<ID>/<task>/camera_2.mp4",
           "COMFI/videos/<ID>/<task>/camera_4.mp4",
-          "COMFI/videos/<ID>/<task>/camera_6.mp4"
+          "COMFI/videos/<ID>/<task>/camera_6.mp4",
+          "COMFI/videos/<ID>/<task>/camera_0_timestamps.csv",
+          "COMFI/videos/<ID>/<task>/camera_2_timestamps.csv",
+          "COMFI/videos/<ID>/<task>/camera_4_timestamps.csv",
+          "COMFI/videos/<ID>/<task>/camera_6_timestamps.csv"
         ]}] } },
 
     { id:"cam_params", title:"cam params", col:"left",        row:0,
@@ -70,14 +74,14 @@
             "COMFI/mocap/raw/<ID>/<task>/{task}.c3d",
             "COMFI/mocap/raw/<ID>/<task>/joint_angles.csv",
             "COMFI/mocap/raw/<ID>/<task>/joint_center.csv",
-            "COMFI/mocap/raw/<ID>/<task>/markers.csv",
-            "COMFI/mocap/raw/<ID>/<task>/markers_model.csv"
+            "COMFI/mocap/raw/<ID>/<task>/markers_trajectories.csv",
+            "COMFI/mocap/raw/<ID>/<task>/markers_model_trajectories.csv"
           ]},
           {id:"aligned", title:"Aligned", note:"Synchronized with cam 40 Hz", paths:[
             "COMFI/mocap/aligned/<ID>/<task>/joint_angles.csv",
             "COMFI/mocap/aligned/<ID>/<task>/joint_center.csv",
-            "COMFI/mocap/aligned/<ID>/<task>/markers.csv",
-            "COMFI/mocap/aligned/<ID>/<task>/markers_model.csv"
+            "COMFI/mocap/aligned/<ID>/<task>/markers_trajectories.csv",
+            "COMFI/mocap/aligned/<ID>/<task>/markers_model_trajectories.csv"
           ]}
         ] } },
 
@@ -85,7 +89,7 @@
       info:{ rate:"", desc:"Per-participant descriptors and scaled URDF.",
         groups:[{id:"files", title:"Files", paths:[
           "COMFI/metadata/<ID>/<ID>.yaml",
-          "COMFI/metadata/<ID>/<ID>_scaled.urdf"
+          "COMFI/metadata/<ID>/urdf/<ID>_scaled.urdf"
         ]}] } },
 
     { id:"forces",     title:"forces",     col:"left-closer",  row:1,
@@ -178,8 +182,8 @@
 
     // Visible modalities depend on task
     const task = $("#ds-task").value;
-    const showRobot  = (task === "robot_sanding" || task === "robot_welding");
-    const hideForces = (task === "overhead" || task === "walk" || task === "walk_front");
+    const showRobot  = (task === "RobotPolishing" || task === "RobotWelding");
+    const hideForces = (task === "SideOverhead" || task === "CircularWalking" || task === "StraightWalking");
 
     const mods = CATALOG.filter(m =>
       (m.id !== "robot"  || showRobot) &&
@@ -473,7 +477,7 @@ function showPopover(mod, node){
     subjSel.value = SUBJECT_IDS.includes("1847") ? "1847" : SUBJECT_IDS[0];
 
     DS_TASKS.forEach(t=>{ const o=document.createElement("option"); o.value=t; o.textContent=t; taskSel.appendChild(o); });
-    taskSel.value = "bolting";
+    taskSel.value = "Screwing";
 
     subjSel.addEventListener("change", ()=>{ if (activeId && pop) showPopover(CATALOG.find(m=>m.id===activeId), nodes[activeId]); });
     taskSel.addEventListener("change", ()=>{ clearActive(); buildSVG(); }); // rebuild for conditional nodes

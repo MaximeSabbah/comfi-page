@@ -8,24 +8,26 @@
 
 /* ---- Task list ---- */
 const TASK_NAMES = [
-  "bolting","bolting_sat","crouch","crouch_object","hitting","hitting_sat","jump","lifting",
-  "lifting_fast","lower","overhead","robot_sanding","robot_welding",
-  "sanding","sanding_sat","sit_to_stand","squat","static","upper","walk","walk_front",
-  "welding","welding_sat"
+  "Screwing","ScrewingSat","Crouching","Picking","Hammering","HammeringSat","Jumping","Lifting",
+  "QuickLifting","Lower","SideOverhead","RobotPolishing","RobotWelding",
+  "Polishing","PolishingSat","SitToStand","Squatting","Static","Upper","CircularWalking","StraightWalking",
+  "Welding","WeldingSat"
 ];
 
 /* ---- Labels ---- */
 const LABEL_OVERRIDES = {
-  sit_to_stand: "Sit-to-Stand",
-  walk_front: "Walk (front)",
-  bolting_sat: "Bolting (sat)",
-  sanding_sat: "Sanding (sat)",
-  welding_sat: "Welding (sat)",
-  hitting_sat: "Hitting (sat)",
-  robot_sanding: "Robot Sanding",
-  robot_welding: "Robot Welding",
-  lifting_fast: "Lifting (fast)",
-  crouch_object: "Crouch (object)"
+  SitToStand: "Sit-to-Stand",
+  StraightWalking: "Walk (straight)",
+  CircularWalking: "Walk (circular)",
+  ScrewingSat: "Screwing (sat)",
+  PolishingSat: "Polishing (sat)",
+  WeldingSat: "Welding (sat)",
+  HammeringSat: "Hammering (sat)",
+  RobotPolishing: "Robot Polishing",
+  RobotWelding: "Robot Welding",
+  QuickLifting: "Lifting (quick)",
+  Picking: "Crouch to pick an object",
+  SideOverhead: "Overhead (side)"
 };
 
 const humanize = n => LABEL_OVERRIDES[n] ?? n.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -48,7 +50,7 @@ let itemsPerPage = 10;            // fixed 10 per page
 let currentPage = 1;
 let filtered = [...TASKS];
 
-let featuredId = "robot_sanding";            // id of the currently featured task
+let featuredId = "RobotPolishing";            // id of the currently featured task
 let videoObserver = null;
 const playingSet = new Set();
 const MAX_PLAYING = 6;            // cap concurrent playbacks

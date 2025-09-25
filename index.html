@@ -535,7 +535,7 @@
   <div class="container is-max-widescreen">
     <h2 class="title is-3 has-text-centered">Dataset code examples</h2>
     <p class="subtitle has-text-centered">
-      Launch commands + short output videos for common viewers.
+      Launch commands + short output videos of what to expect.
     </p>
 
     <!-- Carousel -->
@@ -557,8 +557,8 @@
                 <pre><code id="cmd-viz-jcp" class="bash"># From the repo root
 python -m scripts.visualization.viz_jcp \
   --root /path/to/COMFI \
-  --subject 1118 \
-  --task OverheadWork</code></pre>
+  --id $ID \
+  --task $TASK</code></pre>
                 <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-jcp">
                   <i class="fas fa-copy"></i>&nbsp;Copy
                 </button>
@@ -591,8 +591,8 @@ python -m scripts.visualization.viz_jcp \
               <div class="message-body">
                 <pre><code id="cmd-viz-markers" class="bash">python -m scripts.visualization.viz_multiple_mks_set \
   --root /path/to/COMFI \
-  --subject 1118 \
-  --task OverheadWork</code></pre>
+  --id $ID \
+  --task $TASK</code></pre>
                 <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-markers">
                   <i class="fas fa-copy"></i>&nbsp;Copy
                 </button>
@@ -625,8 +625,8 @@ python -m scripts.visualization.viz_jcp \
               <div class="message-body">
                 <pre><code id="cmd-viz-all" class="bash">python -m scripts.visualization.viz_all_data \
   --root /path/to/COMFI \
-  --subject 1118 \
-  --task OverheadWork</code></pre>
+  --id $ID \
+  --task $TASK</code></pre>
                 <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-all">
                   <i class="fas fa-copy"></i>&nbsp;Copy
                 </button>

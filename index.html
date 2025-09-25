@@ -118,6 +118,7 @@
   <script defer src="static/js/index.js"></script>
   <script defer src="static/js/tasks-gallery.js"></script>
   <script defer src="static/js/dataset-map.js?v=3.7"></script>
+  <script defer src="static/js/code-examples.js"></script>
 
   
   <!-- Structured Data for Academic Papers -->
@@ -530,7 +531,124 @@
   </div>
 </section>
 
-<section class="hero is-small is-light">
+<section id="code-examples" class="section is-light">
+  <div class="container is-max-widescreen">
+    <h2 class="title is-3 has-text-centered">Dataset code examples</h2>
+    <p class="subtitle has-text-centered">
+      Launch commands + short output videos for common viewers.
+    </p>
+
+    <!-- Carousel -->
+    <div id="code-carousel" class="carousel results-carousel">
+      <!-- Slide 1: viz_jcp -->
+      <div class="item">
+        <div class="columns is-vcentered is-multiline">
+          <div class="column is-5">
+            <article class="message is-dark code-box">
+              <div class="message-header">
+                <span>viz_jcp — joint centers viewer</span>
+                <a class="button is-small is-light" target="_blank" rel="noopener"
+                   href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme"
+                   aria-label="Open code on GitHub">
+                  <i class="fab fa-github" aria-hidden="true"></i>&nbsp;Code
+                </a>
+              </div>
+              <div class="message-body">
+                <pre><code id="cmd-viz-jcp" class="bash"># From the repo root
+python -m scripts.visualization.viz_jcp \
+  --root /path/to/COMFI \
+  --subject 1118 \
+  --task OverheadWork</code></pre>
+                <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-jcp">
+                  <i class="fas fa-copy"></i>&nbsp;Copy
+                </button>
+              </div>
+            </article>
+          </div>
+          <div class="column is-7">
+            <figure class="image is-16by9">
+              <video poster="static/posters/demo.jpg" controls muted loop preload="metadata" playsinline>
+                <source src="static/videos/demo.mp4" type="video/mp4">
+              </video>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2: viz_markers (viz_multiple_mks_set) -->
+      <div class="item">
+        <div class="columns is-vcentered is-multiline">
+          <div class="column is-5">
+            <article class="message is-dark code-box">
+              <div class="message-header">
+                <span>viz_markers — MoCap markers + JCP</span>
+                <a class="button is-small is-light" target="_blank" rel="noopener"
+                   href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme"
+                   aria-label="Open code on GitHub">
+                  <i class="fab fa-github"></i>&nbsp;Code
+                </a>
+              </div>
+              <div class="message-body">
+                <pre><code id="cmd-viz-markers" class="bash">python -m scripts.visualization.viz_multiple_mks_set \
+  --root /path/to/COMFI \
+  --subject 1118 \
+  --task OverheadWork</code></pre>
+                <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-markers">
+                  <i class="fas fa-copy"></i>&nbsp;Copy
+                </button>
+              </div>
+            </article>
+          </div>
+          <div class="column is-7">
+            <figure class="image is-16by9">
+              <video poster="static/posters/demo.jpg" controls muted loop preload="metadata" playsinline>
+                <source src="static/videos/demo.mp4" type="video/mp4">
+              </video>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: viz_all_data -->
+      <div class="item">
+        <div class="columns is-vcentered is-multiline">
+          <div class="column is-5">
+            <article class="message is-dark code-box">
+              <div class="message-header">
+                <span>viz_all_data — full multimodal view</span>
+                <a class="button is-small is-light" target="_blank" rel="noopener"
+                   href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme"
+                   aria-label="Open code on GitHub">
+                  <i class="fab fa-github"></i>&nbsp;Code
+                </a>
+              </div>
+              <div class="message-body">
+                <pre><code id="cmd-viz-all" class="bash">python -m scripts.visualization.viz_all_data \
+  --root /path/to/COMFI \
+  --subject 1118 \
+  --task OverheadWork</code></pre>
+                <button class="button is-small is-light copy-cmd" data-copy="#cmd-viz-all">
+                  <i class="fas fa-copy"></i>&nbsp;Copy
+                </button>
+              </div>
+            </article>
+          </div>
+          <div class="column is-7">
+            <figure class="image is-16by9">
+              <video poster="static/posters/demo.jpg" controls muted loop preload="metadata" playsinline>
+                <source src="static/videos/demo.mp4" type="video/mp4">
+              </video>
+            </figure>
+          </div>
+        </div>
+      </div>
+      <!-- Add more items later as you add scripts -->
+    </div>
+  </div>
+</section>
+
+
+<!-- <section class="hero is-small is-light">
   <div class="hero-body">
     <div class="container">
       <h2 class="title is-3 has-text-centered">Dataset code examples</h2>
@@ -539,8 +657,40 @@
         </p>
     </div>
   </div>
-</section>
+</section> -->
 
+<!-- Video carousel -->
+<!-- <section class="hero is-small">
+  <div class="hero-body">
+    <div class="container">
+      <h2 class="title is-3">Another Carousel</h2>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-video1"> -->
+          <!-- TODO: Add poster image for better preview -->
+          <!-- <video poster="" id="video1" controls muted loop height="100%" preload="metadata"> -->
+            <!-- Your video file here -->
+            <!-- <source src="static/videos/carousel1.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-video2"> -->
+          <!-- TODO: Add poster image for better preview -->
+          <!-- <video poster="" id="video2" controls muted loop height="100%" preload="metadata"> -->
+            <!-- Your video file here -->
+            <!-- <source src="static/videos/carousel2.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-video3"> -->
+          <!-- TODO: Add poster image for better preview -->
+          <!-- <video poster="" id="video3" controls muted loop height="100%" preload="metadata"> -->
+            <!-- Your video file here -->
+            <!-- <source src="static/videos/carousel3.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div> -->
+<!-- </section> -->
+<!-- End video carousel -->
 
 <!-- Image carousel -->
 <!-- <section class="hero is-small">
@@ -604,41 +754,6 @@
   </div>
 </section> -->
 <!-- End youtube video -->
-
-
-<!-- Video carousel -->
-<!-- <section class="hero is-small">
-  <div class="hero-body">
-    <div class="container">
-      <h2 class="title is-3">Another Carousel</h2>
-      <div id="results-carousel" class="carousel results-carousel">
-        <div class="item item-video1"> -->
-          <!-- TODO: Add poster image for better preview -->
-          <!-- <video poster="" id="video1" controls muted loop height="100%" preload="metadata"> -->
-            <!-- Your video file here -->
-            <!-- <source src="static/videos/carousel1.mp4" type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-video2"> -->
-          <!-- TODO: Add poster image for better preview -->
-          <!-- <video poster="" id="video2" controls muted loop height="100%" preload="metadata"> -->
-            <!-- Your video file here -->
-            <!-- <source src="static/videos/carousel2.mp4" type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-video3"> -->
-          <!-- TODO: Add poster image for better preview -->
-          <!-- <video poster="" id="video3" controls muted loop height="100%" preload="metadata"> -->
-            <!-- Your video file here -->
-            <!-- <source src="static/videos/carousel3.mp4" type="video/mp4">
-          </video>
-        </div>
-      </div>
-    </div>
-  </div> -->
-<!-- </section> -->
-<!-- End video carousel -->
-
 
 <!-- Paper poster -->
 <!-- <section class="hero is-small is-light">

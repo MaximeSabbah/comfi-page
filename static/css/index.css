@@ -794,6 +794,20 @@ button.ds-copy:hover{ background:#f0f0f0; }
 .fa-huggingface:not(:root) { width: auto; } /* noop guard */
 .fa-huggingface + .hf-fallback { display: none; }
 
+/* Keep code blocks compact and wrapping nicely */
+#code-examples .code-box pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.5rem;
+}
+
+#code-examples .message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {
   .hero-body {

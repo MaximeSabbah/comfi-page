@@ -790,6 +790,10 @@ button.ds-copy:hover{ background:#f0f0f0; }
 
 .ds-warning{ color:#b91c1c; font-weight:700; margin:.25rem 0 .5rem; }
 
+.fa-huggingface { width: 1em; }
+.fa-huggingface:not(:root) { width: auto; } /* noop guard */
+.fa-huggingface + .hf-fallback { display: none; }
+
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {
   .hero-body {

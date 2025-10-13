@@ -807,26 +807,34 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
-/* Code examples: make absolutely sure it's 1-per-view */
-#code-examples .results-carousel .carousel-items { display: block !important; }
-#code-examples .results-carousel .carousel-item { display: none !important; }
-#code-examples .results-carousel .carousel-item.is-active { display: block !important; }
+/* === Code examples carousel: fix right-arrow click === */
+#code-examples .results-carousel { position: relative; }
 
-/* Make sure the carousel nav sits above videos */
-#code-examples .results-carousel .carousel-navigation {
-  z-index: 20;               /* higher than video */
+/* In your build, nav uses `slider-navigation-*` */
+#code-examples .results-carousel .slider-navigation-previous,
+#code-examples .results-carousel .slider-navigation-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;                /* above slide content */
+  pointer-events: auto;       /* take the click */
 }
 
-/* Ensure the nav buttons accept clicks */
-#code-examples .results-carousel .carousel-navigation .carousel-nav-left,
-#code-examples .results-carousel .carousel-navigation .carousel-nav-right {
-  pointer-events: auto;
+/* Bulma places the next button on the right; ensure it’s clickable above video */
+#code-examples .results-carousel .slider-navigation-next {
+  right: 0.5rem;
 }
 
-/* Let clicks pass through the video (we don't need controls here) */
+/* And the previous on the left */
+#code-examples .results-carousel .slider-navigation-previous {
+  left: 0.5rem;
+}
+
+/* Video should NOT intercept clicks in this section */
 #code-examples .image.is-16by9 video {
   pointer-events: none;
 }
+
 
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {

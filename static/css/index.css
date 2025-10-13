@@ -807,33 +807,20 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
-/* === Code examples carousel: fix right-arrow click === */
+/* navigation above video, clickable */
 #code-examples .results-carousel { position: relative; }
-
-/* In your build, nav uses `slider-navigation-*` */
 #code-examples .results-carousel .slider-navigation-previous,
 #code-examples .results-carousel .slider-navigation-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;                /* above slide content */
-  pointer-events: auto;       /* take the click */
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 30; pointer-events: auto;
 }
+#code-examples .results-carousel .slider-navigation-previous { left: 0.5rem; }
+#code-examples .results-carousel .slider-navigation-next     { right: 0.5rem; }
 
-/* Bulma places the next button on the right; ensure it’s clickable above video */
-#code-examples .results-carousel .slider-navigation-next {
-  right: 0.5rem;
-}
+/* video sizing (doesn't affect sliding) */
+#code-examples .image.is-16by9 { position: relative; height: 0; padding-top: 56.25%; overflow: hidden; border-radius: 12px; background:#000; }
+#code-examples .image.is-16by9 video { position: absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; border-radius:12px; }
 
-/* And the previous on the left */
-#code-examples .results-carousel .slider-navigation-previous {
-  left: 0.5rem;
-}
-
-/* Video should NOT intercept clicks in this section */
-#code-examples .image.is-16by9 video {
-  pointer-events: none;
-}
 
 
 /* Mobile Responsive Improvements */

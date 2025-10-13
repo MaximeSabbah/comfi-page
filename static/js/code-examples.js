@@ -2,15 +2,26 @@
 (function () {
   const ROOT = '#code-examples-carousel';
 
+  function keepLooping(video) {
+    if (!video) return;
+    video.muted = true; video.loop = true; video.playsInline = true;
+    // If loop is ignored by a template listener, force-loop here:
+    video.addEventListener('ended', function onEnded(e) {
+      e.stopImmediatePropagation();  // prevent any template 'ended' listener
+      e.stopPropagation();
+      try { this.currentTime = 0; } catch(_) {}
+      Promise.resolve(this.play()).catch(() => {});
+    });
+    Promise.resolve(video.play()).catch(() => {});
+  }
+
   function playActiveVideo() {
-    document.querySelectorAll(ROOT + ' video').forEach(v => { try { v.pause(); } catch(_){}; });
-    const active = document.querySelector(ROOT + ' .is-current, ' + ROOT + ' .is-active');
+    document.querySelectorAll(ROOT + ' video').forEach(v => { try { v.pause(); } catch(_) {} });
+    const active = document.querySelector(
+      ROOT + ' .is-current, ' + ROOT + ' .is-active, ' + ROOT + ' .carousel-item.is-active'
+    );
     if (!active) return;
-    const vid = active.querySelector('video');
-    if (vid) {
-      vid.muted = true; vid.loop = true; vid.playsInline = true;
-      Promise.resolve(vid.play()).catch(() => {});
-    }
+    keepLooping(active.querySelector('video'));
   }
 
   function getInstance() {
@@ -20,15 +31,10 @@
       const found = list.find(c => c && c.element && ('#' + c.element.id) === ROOT);
       if (found) return found;
     } catch (_) {}
-    // Fallback: attach only this one with 1-per-view
     const arr = bulmaCarousel.attach(ROOT, {
-      slidesToShow: 1,
-      slidesToScroll: 1,
-      navigation: true,
-      pagination: true,
-      autoplay: false,
-      infinite: true,     // keep right arrow active on last slide
-      pauseOnHover: true
+      slidesToShow: 1, slidesToScroll: 1,
+      navigation: true, pagination: true,
+      autoplay: false, infinite: true, pauseOnHover: true
     });
     return Array.isArray(arr) ? arr[0] : arr;
   }
@@ -40,29 +46,13 @@
     const instance = getInstance();
     if (!instance) return;
 
-    // Keep the visible slide’s video playing like a GIF
     if (typeof instance.on === 'function') {
       instance.on('ready', playActiveVideo);
       instance.on('after:show', playActiveVideo);
     }
-    playActiveVideo();
+    playActiveVideo(); // first paint
 
-    // Bind nav buttons explicitly for this build (uses `slider-navigation-*`)
-    const btnPrev = root.querySelector('.slider-navigation-previous');
-    const btnNext = root.querySelector('.slider-navigation-next');
-
-    if (btnPrev) {
-      ['click','touchend'].forEach(ev =>
-        btnPrev.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); if (instance.previous) instance.previous(); })
-      );
-    }
-    if (btnNext) {
-      ['click','touchend'].forEach(ev =>
-        btnNext.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); if (instance.next) instance.next(); })
-      );
-    }
-
-    // Copy-to-clipboard buttons (unchanged)
+    // Copy buttons (unchanged)
     document.querySelectorAll('.copy-cmd').forEach(btn => {
       btn.addEventListener('click', () => {
         const sel = btn.getAttribute('data-copy');

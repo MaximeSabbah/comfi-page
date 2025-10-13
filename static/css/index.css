@@ -807,6 +807,15 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
+/* Force 1 slide per view in the code examples carousel */
+#code-examples .results-carousel .item {
+  width: 100% !important;   /* Nerfies often sets ~45–50%; override it */
+}
+#code-examples .results-carousel {
+  overflow: hidden;          /* avoid peeking next slide */
+}
+
+
 
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {

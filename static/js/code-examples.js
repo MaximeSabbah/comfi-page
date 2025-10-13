@@ -4,14 +4,21 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (window.bulmaCarousel) {
       bulmaCarousel.attach('#code-carousel', {
-        slidesToScroll: 1,
-        slidesToShow: 1,
-        autoplay: false,
-        pauseOnHover: true,
-        loop: true,
-        navigation: true,
-        pagination: true
-      });
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      loop: true,
+      navigation: true,
+      pagination: true,
+      autoplay: false,
+      pauseOnHover: true,
+      // belt-and-suspenders: never switch to multiple slides on wide screens
+      breakpoints: [
+        { changePoint: 0,    slidesToShow: 1, slidesToScroll: 1 },
+        { changePoint: 769,  slidesToShow: 1, slidesToScroll: 1 },
+        { changePoint: 1024, slidesToShow: 1, slidesToScroll: 1 }
+      ]
+    });
+
     }
 
     // Copy buttons

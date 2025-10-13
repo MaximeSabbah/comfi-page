@@ -553,10 +553,10 @@
         <div class="item">
           <div class="card" style="border-radius:14px;">
             <header class="card-header">
-              <p class="card-header-title">viz_jcp.py — joint centers viewer</p>
+              <p class="card-header-title">viz_jcp.py</p>
               <a class="button is-small is-light m-2"
                  target="_blank" rel="noopener"
-                 href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme">
+                 href="https://github.com/Gepetto/comfi-examples/blob/main/scripts/visualization/viz_jcp.py">
                 <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
               </a>
             </header>
@@ -564,9 +564,13 @@
               <div class="columns is-vcentered is-multiline">
                 <div class="column is-5">
                   <pre class="p-3 has-background-light" style="white-space:pre-wrap;border-radius:10px;"><code id="cmd-viz-jcp" class="bash">python scripts/visualization/viz_jcp.py \
-  --root /path/to/COMFI \
-  --id 1118 \
-  --task OverheadWork</code></pre>
+                  --mode hpe \
+                  --id $ID \
+                  --task $TASK \
+                  --nb-cams 4 \
+                  --freq 40 \
+                  --start 0 \
+                  --stop 500</code></pre>
                   <button class="button is-small is-light mt-2 copy-cmd" data-copy="#cmd-viz-jcp">
                     <span class="icon"><i class="fas fa-copy"></i></span><span>Copy</span>
                   </button>
@@ -574,7 +578,7 @@
                 <div class="column is-7">
                   <figure class="image is-16by9" style="border-radius:12px; overflow:hidden;">
                     <video autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;">
-                      <source src="static/videos/demo.mp4" type="video/mp4">
+                      <source src="static/videos/viz_jcp.mp4" type="video/mp4">
                     </video>
                   </figure>
                 </div>
@@ -587,10 +591,10 @@
         <div class="item">
           <div class="card" style="border-radius:14px;">
             <header class="card-header">
-              <p class="card-header-title">viz_mks.py — MoCap markers + JCP</p>
+              <p class="card-header-title">viz_mks.py</p>
               <a class="button is-small is-light m-2"
                  target="_blank" rel="noopener"
-                 href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme">
+                 href="https://github.com/Gepetto/comfi-examples/blob/main/scripts/visualization/viz_mks.py">
                 <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
               </a>
             </header>
@@ -598,9 +602,14 @@
               <div class="columns is-vcentered is-multiline">
                 <div class="column is-5">
                   <pre class="p-3 has-background-light" style="white-space:pre-wrap;border-radius:10px;"><code id="cmd-viz-mks" class="bash">python scripts/visualization/viz_mks.py \
-  --root /path/to/COMFI \
-  --id 1118 \
-  --task OverheadWork</code></pre>
+                  --id $ID \
+                  --task $TASK \
+                  --comfi-root /path/to/COMFI \
+                  --freq 40 \
+                  --mkset est \
+                  --with_jcp \
+                  --start 100 \
+                  --stop 500</code></pre>
                   <button class="button is-small is-light mt-2 copy-cmd" data-copy="#cmd-viz-mks">
                     <span class="icon"><i class="fas fa-copy"></i></span><span>Copy</span>
                   </button>
@@ -608,7 +617,7 @@
                 <div class="column is-7">
                   <figure class="image is-16by9" style="border-radius:12px; overflow:hidden;">
                     <video autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;">
-                      <source src="static/videos/demo.mp4" type="video/mp4">
+                      <source src="static/videos/viz_mks.mp4" type="video/mp4">
                     </video>
                   </figure>
                 </div>
@@ -624,7 +633,7 @@
               <p class="card-header-title">viz_all_data.py — full multimodal view</p>
               <a class="button is-small is-light m-2"
                  target="_blank" rel="noopener"
-                 href="https://github.com/MaximeSabbah/comfi-usage/tree/main/scripts/visualization#readme">
+                 href="https://github.com/Gepetto/comfi-examples/blob/main/scripts/visualization/viz_all_data.py">
                 <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
               </a>
             </header>
@@ -632,9 +641,14 @@
               <div class="columns is-vcentered is-multiline">
                 <div class="column is-5">
                   <pre class="p-3 has-background-light" style="white-space:pre-wrap;border-radius:10px;"><code id="cmd-viz-all" class="bash">python scripts/visualization/viz_all_data.py \
-  --root /path/to/COMFI \
-  --id 1118 \
-  --task OverheadWork</code></pre>
+                  --id $ID \
+                  --task $TASK \
+                  --comfi-root /path/to/COMFI \
+                  --freq 40 \
+                  --start 100 \
+                  --with-jcp-hpe \ (optional)
+                  --jcp-hpe-mode aligned
+                  </code></pre>
                   <button class="button is-small is-light mt-2 copy-cmd" data-copy="#cmd-viz-all">
                     <span class="icon"><i class="fas fa-copy"></i></span><span>Copy</span>
                   </button>
@@ -642,7 +656,7 @@
                 <div class="column is-7">
                   <figure class="image is-16by9" style="border-radius:12px; overflow:hidden;">
                     <video autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;">
-                      <source src="static/videos/demo.mp4" type="video/mp4">
+                      <source src="static/videos/viz_all_data.mp4" type="video/mp4">
                     </video>
                   </figure>
                 </div>
@@ -650,7 +664,6 @@
             </div>
           </div>
         </div>
-
       </div> <!-- /carousel -->
     </div>
   </div>

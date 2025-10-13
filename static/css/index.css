@@ -812,6 +812,21 @@ button.ds-copy:hover{ background:#f0f0f0; }
 #code-examples .results-carousel .carousel-item { display: none !important; }
 #code-examples .results-carousel .carousel-item.is-active { display: block !important; }
 
+/* Make sure the carousel nav sits above videos */
+#code-examples .results-carousel .carousel-navigation {
+  z-index: 20;               /* higher than video */
+}
+
+/* Ensure the nav buttons accept clicks */
+#code-examples .results-carousel .carousel-navigation .carousel-nav-left,
+#code-examples .results-carousel .carousel-navigation .carousel-nav-right {
+  pointer-events: auto;
+}
+
+/* Let clicks pass through the video (we don't need controls here) */
+#code-examples .image.is-16by9 video {
+  pointer-events: none;
+}
 
 /* Mobile Responsive Improvements */
 @media screen and (max-width: 768px) {

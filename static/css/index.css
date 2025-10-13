@@ -807,23 +807,37 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
-/* === Code examples carousel: 1 item per view, always === */
-#code-examples .code-carousel { overflow: hidden; }
-
-/* Bulma-carousel uses .item in your markup and mirrors slides as .carousel-item.
-   Some templates also inject inline widths; overrule both, hard. */
-#code-examples .code-carousel .item,
-#code-examples .code-carousel .carousel-item {
-  flex: 0 0 100% !important;
-  max-width: 100% !important;
-  width: 100% !important;
+/* === Code examples carousel: force single visible slide, regardless of global init === */
+#code-examples .code-carousel .carousel-items { 
+  display: block !important;           /* break the flex row that shows multiple tiles */
+}
+#code-examples .code-carousel .carousel-item { 
+  display: none !important;            /* hide non-active slides */
+}
+#code-examples .code-carousel .carousel-item.is-active { 
+  display: block !important;           /* show only the active one */
 }
 
-/* If the template globally spaces items with gaps/margins, neutralize here */
-#code-examples .code-carousel .carousel-items,
-#code-examples .code-carousel .carousel-container {
-  gap: 0 !important;
+/* Make the 16:9 wrapper actually frame the <video> and fill it */
+#code-examples .image.is-16by9 {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 56.25%;                  /* 16:9 */
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
 }
+#code-examples .image.is-16by9 video {
+  position: absolute;
+  inset: 0;                             /* top:0; right:0; bottom:0; left:0 */
+  width: 100%;
+  height: 100%;
+  object-fit: contain;                  /* or 'cover' if you prefer full-bleed */
+  display: block;
+  border-radius: 12px;
+}
+
 
 
 /* Mobile Responsive Improvements */

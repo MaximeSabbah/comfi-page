@@ -121,84 +121,30 @@ function setupVideoCarouselAutoplay() {
 
 // --- keep the rest of index.js above unchanged ---
 
-$(document).ready(function() {
-    // Global defaults for all carousels (as before)
-    var options = {
-        slidesToScroll: 1,
-        slidesToShow: 1,
-        loop: true,
-        infinite: true,
-        autoplay: true,
-        autoplaySpeed: 5000,
-    };
+$(document).ready(function () {
+  // If you still want a global attach for *other* carousels, keep it but exclude #code-carousel:
+  // bulmaCarousel.attach('.carousel:not(#code-carousel)', {
+  //   slidesToScroll: 1,
+  //   slidesToShow: 1,
+  //   loop: true,
+  //   infinite: true,
+  //   autoplay: true,
+  //   autoplaySpeed: 5000,
+  // });
 
-    // 1) Attach to all carousels EXCEPT the code-examples one
-    bulmaCarousel.attach('.carousel:not(#code-examples-carousel)', options);
+  // Attach ONLY the code carousel
+  bulmaCarousel.attach('#code-carousel', {
+    slidesToScroll: 1,
+    slidesToShow: 1,
+    loop: true,
+    infinite: true,
+    autoplay: false,   // manual nav
+    navigation: true,
+    pagination: true,
+    pauseOnHover: true
+  });
 
-    // 2) Attach the code-examples carousel with manual navigation (no autoplay)
-    bulmaCarousel.attach('#code-examples-carousel', {
-        slidesToScroll: 1,
-        slidesToShow: 1,
-        loop: true,
-        infinite: true,
-        autoplay: false,      // <-- user controls only
-        navigation: true,
-        pagination: true,
-        pauseOnHover: true
-    });
-
-    bulmaSlider.attach();
-
-    // Keep your IntersectionObserver helper (it only plays/pause videos; harmless)
-    setupVideoCarouselAutoplay();
-    
-    // ---- Fix for code-examples carousel: bind arrows to the correct instance ----
-    const root = document.getElementById('code-examples-carousel');
-    if (root && window.bulmaCarousel) {
-        // Try to find the single instance created for this element
-        let instance = null;
-        try {
-        const list = bulmaCarousel._carousels || [];
-        instance = list.find(c => c && c.element === root) || null;
-        } catch (_) {}
-
-        // If somehow multiple instances exist, keep the first and destroy the rest
-        try {
-        const dups = (bulmaCarousel._carousels || []).filter(c => c && c.element === root);
-        if (dups.length > 1 && typeof dups[0].destroy === 'function') {
-            for (let i = 1; i < dups.length; i++) dups[i].destroy();
-            instance = dups[0];
-        }
-        } catch (_) {}
-
-        if (instance) {
-        const prevBtn = root.querySelector('.slider-navigation-previous');
-        const nextBtn = root.querySelector('.slider-navigation-next');
-
-        const safeBind = (el, fn) => {
-            if (!el) return;
-            el.style.pointerEvents = 'auto';
-            el.style.zIndex = '5';
-            el.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            try { fn.call(instance); } catch (_) {}
-            }, { capture: true });
-        };
-
-        safeBind(prevBtn, instance.previous);
-        safeBind(nextBtn, instance.next);
-
-        // Also make these elements click-through safe
-        const track = root.querySelector('.slider-container');
-        if (track) track.style.willChange = 'transform';
-
-        // Make sure nothing else auto-advances this carousel
-        if (typeof instance.options === 'object') {
-            instance.options.autoplay = false;
-            instance.options.pauseOnHover = true;
-        }
-        }
-    }
+  bulmaSlider.attach();
+  setupVideoCarouselAutoplay();
 });
 

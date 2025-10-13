@@ -538,8 +538,16 @@
       Launch commands + short output videos of what to expect.
     </p>
 
-    <!-- Carousel -->
-    <div id="code-carousel" class="carousel code-carousel">
+    <!-- One-per-view carousel (scoped via data-attributes) -->
+    <div id="code-carousel"
+         class="carousel results-carousel"
+         data-slides-to-show="1"
+         data-slides-to-scroll="1"
+         data-navigation="true"
+         data-pagination="true"
+         data-autoplay="false"
+         data-pause-on-hover="true">
+
       <!-- Slide 1: viz_jcp -->
       <div class="item">
         <div class="columns is-vcentered is-multiline">
@@ -567,7 +575,9 @@ python -m scripts.visualization.viz_jcp \
           </div>
           <div class="column is-7">
             <figure class="image is-16by9">
-              <video poster="static/posters/demo.jpg" autoplay controls muted loop preload="metadata" playsinline>
+              <video poster="static/posters/demo.jpg"
+                     autoplay muted loop playsinline preload="metadata"
+                     style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px">
                 <source src="static/videos/demo.mp4" type="video/mp4">
               </video>
             </figure>
@@ -601,7 +611,9 @@ python -m scripts.visualization.viz_jcp \
           </div>
           <div class="column is-7">
             <figure class="image is-16by9">
-              <video poster="static/posters/demo.jpg" autoplay controls muted loop preload="metadata" playsinline>
+              <video poster="static/posters/demo.jpg"
+                     autoplay muted loop playsinline preload="metadata"
+                     style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px">
                 <source src="static/videos/demo.mp4" type="video/mp4">
               </video>
             </figure>
@@ -635,7 +647,9 @@ python -m scripts.visualization.viz_jcp \
           </div>
           <div class="column is-7">
             <figure class="image is-16by9">
-              <video poster="static/posters/demo.jpg" autoplay controls muted loop preload="metadata" playsinline>
+              <video poster="static/posters/demo.jpg"
+                     autoplay muted loop playsinline preload="metadata"
+                     style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px">
                 <source src="static/videos/demo.mp4" type="video/mp4">
               </video>
             </figure>

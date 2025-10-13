@@ -1,82 +1,64 @@
 // static/js/code-examples.js
 (function () {
   function playActiveVideo() {
-    // Pause all videos in the code carousel
+    // pause all videos in our carousel
     document.querySelectorAll('#code-carousel video').forEach(v => {
       try { v.pause(); } catch (_) {}
     });
-    // Play the active slide's video (if any)
-    const active = document.querySelector('#code-carousel .is-active');
+    // play the active slide's video
+    const active = document.querySelector('#code-carousel .is-current, #code-carousel .is-active');
     if (!active) return;
     const vid = active.querySelector('video');
     if (vid) {
-      vid.muted = true;               // required for autoplay on most browsers
-      Promise.resolve(vid.play()).catch(() => {}); // ignore autoplay promise errors
+      vid.muted = true;  // required for autoplay in most browsers
+      Promise.resolve(vid.play()).catch(() => {});
     }
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!window.bulmaCarousel) return;
 
-    // If a global initializer already attached to ALL carousels,
-    // it likely created a 2-up instance for #code-carousel.
-    // Find that instance and destroy it before we re-attach with our own options.
+    // Try to get the instance the global initializer already created
+    let instance = null;
     try {
-      const carousels = bulmaCarousel._carousels || [];
-      carousels.forEach(c => {
-        if (c && c.element && c.element.id === 'code-carousel' && typeof c.destroy === 'function') {
-          c.destroy();
-        }
+      const list = bulmaCarousel._carousels || [];
+      instance = list.find(c => c && c.element && c.element.id === 'code-carousel') || null;
+    } catch (_) {}
+
+    // Fallback: if not found (unlikely), attach just this one with 1-per-view
+    if (!instance) {
+      const arr = bulmaCarousel.attach('#code-carousel', {
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        navigation: true,
+        pagination: true,
+        autoplay: false,
+        pauseOnHover: true
       });
-    } catch (e) {
-      // non-fatal if internals differ
+      instance = Array.isArray(arr) ? arr[0] : arr;
     }
 
-    // Attach ONLY to our feature carousel with 1-per-view (belt & suspenders)
-    const instances = bulmaCarousel.attach('#code-carousel', {
-      slidesToShow: 1,
-      slidesToScroll: 1,
-      loop: true,
-      navigation: true,
-      pagination: true,
-      autoplay: false,      // we control the actual <video> playback
-      pauseOnHover: true,
-      breakpoints: [
-        { changePoint: 0,    slidesToShow: 1, slidesToScroll: 1 },
-        { changePoint: 769,  slidesToShow: 1, slidesToScroll: 1 },
-        { changePoint: 1024, slidesToShow: 1, slidesToScroll: 1 }
-      ]
-    });
+    // (re)play when ready / after show
+    if (instance && typeof instance.on === 'function') {
+      instance.on('ready', playActiveVideo);
+      instance.on('after:show', playActiveVideo);
+    }
+    // and once after DOM loaded
+    playActiveVideo();
 
-    const carousel = Array.isArray(instances) ? instances[0] : instances;
-
-    // (Re)play the visible video's slide
-    const bindPlayback = () => {
-      playActiveVideo();
-      if (carousel && typeof carousel.on === 'function') {
-        carousel.on('ready', playActiveVideo);
-        carousel.on('after:show', playActiveVideo);
-      }
-    };
-
-    // Bind now and once more after load (covers rare timing races)
-    bindPlayback();
-    window.addEventListener('load', playActiveVideo);
-
-    // Copy buttons (unchanged)
+    // Copy buttons
     document.querySelectorAll('.copy-cmd').forEach(btn => {
       btn.addEventListener('click', () => {
-        const targetSel = btn.getAttribute('data-copy');
-        const el = document.querySelector(targetSel);
+        const sel = btn.getAttribute('data-copy');
+        const el  = document.querySelector(sel);
         if (!el) return;
-
         const text = el.innerText.trim();
         navigator.clipboard.writeText(text).then(() => {
-          const original = btn.innerHTML;
+          const prev = btn.innerHTML;
           btn.innerHTML = '<i class="fas fa-check"></i>&nbsp;Copied';
           btn.classList.add('is-success');
           setTimeout(() => {
-            btn.innerHTML = original;
+            btn.innerHTML = prev;
             btn.classList.remove('is-success');
           }, 1400);
         });

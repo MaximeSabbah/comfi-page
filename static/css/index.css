@@ -807,14 +807,16 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
-/* Force 1 slide per view in the code examples carousel */
-#code-examples .results-carousel .item {
-  width: 100% !important;   /* Nerfies often sets ~45–50%; override it */
-}
-#code-examples .results-carousel {
-  overflow: hidden;          /* avoid peeking next slide */
-}
+/* Scope to the code examples carousel only */
+#code-examples .code-carousel { overflow: hidden; }
 
+/* Bulma-carousel wraps items as .carousel-item with inline widths.
+   Beat that by forcing flex-basis/max-width to 100%. */
+#code-examples .code-carousel .carousel-item {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
 
 
 /* Mobile Responsive Improvements */

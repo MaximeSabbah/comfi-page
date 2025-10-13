@@ -807,15 +807,22 @@ button.ds-copy:hover{ background:#f0f0f0; }
   justify-content: space-between;
 }
 
-/* Scope to the code examples carousel only */
+/* === Code examples carousel: 1 item per view, always === */
 #code-examples .code-carousel { overflow: hidden; }
 
-/* Bulma-carousel wraps items as .carousel-item with inline widths.
-   Beat that by forcing flex-basis/max-width to 100%. */
+/* Bulma-carousel uses .item in your markup and mirrors slides as .carousel-item.
+   Some templates also inject inline widths; overrule both, hard. */
+#code-examples .code-carousel .item,
 #code-examples .code-carousel .carousel-item {
   flex: 0 0 100% !important;
   max-width: 100% !important;
   width: 100% !important;
+}
+
+/* If the template globally spaces items with gaps/margins, neutralize here */
+#code-examples .code-carousel .carousel-items,
+#code-examples .code-carousel .carousel-container {
+  gap: 0 !important;
 }
 
 

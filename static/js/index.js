@@ -119,24 +119,37 @@ function setupVideoCarouselAutoplay() {
     });
 }
 
+// --- keep the rest of index.js above unchanged ---
+
 $(document).ready(function() {
-    // Check for click events on the navbar burger icon
-
+    // Global defaults for all carousels (as before)
     var options = {
-		slidesToScroll: 1,
-		slidesToShow: 1,
-		loop: true,
-		infinite: true,
-		autoplay: true,
-		autoplaySpeed: 5000,
-    }
+        slidesToScroll: 1,
+        slidesToShow: 1,
+        loop: true,
+        infinite: true,
+        autoplay: true,
+        autoplaySpeed: 5000,
+    };
 
-	// Initialize all div with carousel class
-    var carousels = bulmaCarousel.attach('.carousel', options);
-	
+    // 1) Attach to all carousels EXCEPT the code-examples one
+    bulmaCarousel.attach('.carousel:not(#code-examples-carousel)', options);
+
+    // 2) Attach the code-examples carousel with manual navigation (no autoplay)
+    bulmaCarousel.attach('#code-examples-carousel', {
+        slidesToScroll: 1,
+        slidesToShow: 1,
+        loop: true,
+        infinite: true,
+        autoplay: false,      // <-- user controls only
+        navigation: true,
+        pagination: true,
+        pauseOnHover: true
+    });
+
     bulmaSlider.attach();
-    
-    // Setup video autoplay for carousel
-    setupVideoCarouselAutoplay();
 
-})
+    // Keep your IntersectionObserver helper (it only plays/pause videos; harmless)
+    setupVideoCarouselAutoplay();
+});
+
